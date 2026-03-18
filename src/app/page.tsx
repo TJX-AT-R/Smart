@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ArrowRight } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser } from "@/firebase"
@@ -28,6 +28,9 @@ export default function LandingPage() {
           </Link>
           <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/resources">
             Study Resources
+          </Link>
+          <Link className="text-sm font-medium text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1" href="/admin/login">
+            <ShieldAlert size={14} /> Admin
           </Link>
           {user ? (
             <Button asChild variant="secondary" size="sm">
@@ -95,6 +98,15 @@ export default function LandingPage() {
                     </Link>
                   </>
                 )}
+                <div className="border-t border-white/10 pt-6">
+                  <Link 
+                    className="text-xl font-medium text-destructive hover:text-destructive/80 transition-colors flex items-center gap-2" 
+                    href="/admin/login"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <ShieldAlert size={20} /> Admin Portal
+                  </Link>
+                </div>
                 <Button asChild className="mt-4 bg-secondary text-secondary-foreground h-14 text-lg">
                   <Link href="/login" onClick={() => setIsOpen(false)}>
                     {user ? "Go to Dashboard" : "Start Learning"}
@@ -192,6 +204,7 @@ export default function LandingPage() {
           </div>
           <p className="text-sm text-muted-foreground">© 2024 DriveSmart Coach. Built for future drivers.</p>
           <div className="flex gap-8">
+            <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/admin/login">Admin Login</Link>
             <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Privacy</Link>
             <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Terms</Link>
           </div>
