@@ -1,9 +1,8 @@
-
 "use client"
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, Pencil } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser, useAuth } from "@/firebase"
@@ -31,11 +30,14 @@ export default function LandingPage() {
         </Link>
         
         <nav className="ml-auto hidden md:flex gap-6 lg:gap-10 items-center">
-          <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#features">
-            Features
+          <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/about">
+            About Us
           </Link>
           <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/practice">
             Practice Bank
+          </Link>
+          <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/mock-test">
+            Mock Tests
           </Link>
           <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/resources">
             Study Resources
@@ -78,25 +80,32 @@ export default function LandingPage() {
               </SheetHeader>
               <nav className="flex flex-col gap-6 mt-12">
                 <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
-                  href="#features"
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
+                  href="/about"
                   onClick={() => setIsOpen(false)}
                 >
-                  Features
+                  <Info size={24} className="text-secondary" /> About Us
                 </Link>
                 <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
                   href="/practice"
                   onClick={() => setIsOpen(false)}
                 >
-                  Practice Bank
+                  <BookOpen size={24} className="text-secondary" /> Practice Bank
                 </Link>
                 <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
+                  href="/mock-test"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <ClipboardCheck size={24} className="text-secondary" /> Mock Tests
+                </Link>
+                <Link 
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
                   href="/resources"
                   onClick={() => setIsOpen(false)}
                 >
-                  Study Resources
+                  <ShieldCheck size={24} className="text-secondary" /> Study Resources
                 </Link>
                 {!user ? (
                   <>
@@ -117,10 +126,10 @@ export default function LandingPage() {
                   </>
                 ) : (
                   <button 
-                    className="text-2xl font-semibold text-left text-white hover:text-secondary transition-colors flex items-center gap-2" 
+                    className="text-2xl font-semibold text-left text-white hover:text-secondary transition-colors flex items-center gap-4" 
                     onClick={handleLogout}
                   >
-                    <LogOut size={24} /> Logout
+                    <LogOut size={24} className="text-secondary" /> Logout
                   </button>
                 )}
                 <div className="border-t border-white/10 pt-6">
@@ -161,7 +170,7 @@ export default function LandingPage() {
                     <Link href="/login">Get Started Free</Link>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-lg sm:text-xl border-white/10 hover:bg-white/5 text-white">
-                    <Link href="#features">How it works</Link>
+                    <Link href="/about">Learn More</Link>
                   </Button>
                 </div>
                 <div className="flex flex-wrap justify-center lg:justify-start items-center gap-4 sm:gap-8 text-xs sm:text-sm text-muted-foreground">
@@ -229,6 +238,7 @@ export default function LandingPage() {
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">© 2024 SmartPass Coach. Engineered for future drivers.</p>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
+            <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/about">About Us</Link>
             <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/admin/login">Admin Login</Link>
             <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Privacy</Link>
             <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Terms</Link>

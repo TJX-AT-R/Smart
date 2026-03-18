@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -15,7 +14,8 @@ import {
   Settings,
   LogOut,
   Car,
-  Download
+  Download,
+  Info
 } from "lucide-react"
 
 import {
@@ -84,6 +84,14 @@ export function SidebarNav() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu className="px-2 py-4">
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="About Us" isActive={pathname === "/about"}>
+              <Link href="/about">
+                <Info className={pathname === "/about" ? "text-secondary" : "text-primary/70"} />
+                <span>About Us</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Settings">
               <Link href="/settings">
