@@ -2,14 +2,23 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useState } from "react"
-import { useUser } from "@/firebase"
+import { useUser, useAuth } from "@/firebase"
+import { signOut } from "firebase/auth"
+import { useRouter } from "next/navigation"
 
 export default function LandingPage() {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setIsOpen(false);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent">
@@ -33,9 +42,14 @@ export default function LandingPage() {
             <ShieldAlert size={14} /> Admin
           </Link>
           {user ? (
-            <Button asChild variant="secondary" size="sm">
-              <Link href="/dashboard">Go to Dashboard</Link>
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/dashboard">Go to Dashboard</Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground hover:text-white">
+                <LogOut size={16} className="mr-2" /> Logout
+              </Button>
+            </div>
           ) : (
             <div className="flex items-center gap-4">
               <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/login">
@@ -72,7 +86,7 @@ export default function LandingPage() {
                 >
                   Study Resources
                 </Link>
-                {!user && (
+                {!user ? (
                   <>
                     <Link 
                       className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
@@ -89,6 +103,13 @@ export default function LandingPage() {
                       Sign Up
                     </Link>
                   </>
+                ) : (
+                  <button 
+                    className="text-2xl font-semibold text-left text-white hover:text-secondary transition-colors flex items-center gap-2" 
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={24} /> Logout
+                  </button>
                 )}
                 <div className="border-t border-white/10 pt-6">
                   <Link 

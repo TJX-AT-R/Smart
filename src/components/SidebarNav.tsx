@@ -2,7 +2,9 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { signOut } from "firebase/auth"
+import { useAuth } from "@/firebase"
 import {
   LayoutDashboard,
   BookOpen,
@@ -37,6 +39,17 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname()
+  const router = useRouter()
+  const auth = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      router.push("/")
+    } catch (error) {
+      console.error("Logout failed", error)
+    }
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -79,7 +92,7 @@ export function SidebarNav() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Logout">
+            <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
               <LogOut />
               <span>Logout</span>
             </SidebarMenuButton>
