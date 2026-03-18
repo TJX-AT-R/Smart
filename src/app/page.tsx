@@ -69,13 +69,32 @@ export default function LandingPage() {
                 >
                   Study Resources
                 </Link>
-                <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
-                  href="/login"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {user ? "Dashboard" : "Login"}
-                </Link>
+                {user ? (
+                  <Link 
+                    className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                    href="/dashboard"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link 
+                      className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                      href="/login"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link 
+                      className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                      href="/login?tab=signup"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
                 <Button asChild className="mt-4 bg-secondary text-secondary-foreground h-14 text-lg">
                   <Link href="/login" onClick={() => setIsOpen(false)}>
                     {user ? "Go to Dashboard" : "Start Learning"}

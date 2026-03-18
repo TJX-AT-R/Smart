@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth, useFirestore, useUser } from "@/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"
@@ -14,7 +14,10 @@ import { Car, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 
-export default function AuthPage() {
+function AuthContent() {
+  const searchParams = useSearchParams()
+  const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "login"
+  
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -96,7 +99,7 @@ export default function AuthPage() {
               <Car size={32} />
             </div>
           </Link>
-          <h2 className="text-3xl font-extrabold text-primary-foreground tracking-tight">
+          <h2 className="text-3xl font-extrabold text-white tracking-tight">
             DriveSmart Coach
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -104,7 +107,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl mb-4">
             <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Login</TabsTrigger>
             <TabsTrigger value="signup" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sign Up</TabsTrigger>
@@ -218,5 +221,13 @@ export default function AuthPage() {
         </Tabs>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-secondary" /></div>}>
+      <AuthContent />
+    </Suspense>
   )
 }
