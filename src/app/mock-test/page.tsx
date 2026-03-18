@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -12,15 +13,16 @@ import { useUser, useFirestore } from "@/firebase"
 import { doc, collection, setDoc, serverTimestamp } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
+import Image from "next/image"
 
 export default function MockTestPage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
-  const totalQuestions = 25
+  const totalQuestions = 10 // Adjusted to match available data or preferred length
   const initialTime = 8 * 60 // 8 minutes in seconds
 
-  const [testQuestions, setTestQuestions] = useState(MOCK_QUESTIONS.slice(0, 25))
+  const [testQuestions, setTestQuestions] = useState(MOCK_QUESTIONS.slice(0, totalQuestions))
   const [currentIndex, setCurrentIndex] = useState(0)
   const [userAnswers, setUserAnswers] = useState<(string | null)[]>(new Array(totalQuestions).fill(null))
   const [timeLeft, setTimeLeft] = useState(initialTime)
@@ -49,7 +51,6 @@ export default function MockTestPage() {
       createdAt: serverTimestamp()
     }
 
-    // Save the main attempt document
     setDoc(testAttemptRef, attemptData).catch((err) => {
       errorEmitter.emit("permission-error", new FirestorePermissionError({
         path: testAttemptRef.path,
@@ -58,7 +59,6 @@ export default function MockTestPage() {
       }))
     })
 
-    // Save individual answers
     answers.forEach((answer, index) => {
       const question = testQuestions[index]
       const answerRef = doc(collection(db, "users", user.uid, "testAttempts", testAttemptRef.id, "userAnswers"))
@@ -169,11 +169,11 @@ export default function MockTestPage() {
           <CardContent className="space-y-4 text-sm">
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-0.5" size={16} />
-              <span>Pass mark is 86% (22 out of 25)</span>
+              <span>Pass mark is 86% ({Math.ceil(totalQuestions * 0.86)} out of {totalQuestions})</span>
             </div>
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-0.5" size={16} />
-              <span>Each question has 3 options (A, B, C)</span>
+              <span>Each question has multiple options</span>
             </div>
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-0.5" size={16} />
@@ -227,7 +227,7 @@ export default function MockTestPage() {
               <h4 className="font-semibold text-primary">Summary</h4>
               <div className="flex justify-between items-center text-sm p-4 rounded-xl bg-background/30 border border-white/5">
                 <span>Pass Requirement:</span>
-                <span className="font-bold">22 Correct</span>
+                <span className="font-bold">{Math.ceil(totalQuestions * 0.86)} Correct</span>
               </div>
               <div className="flex justify-between items-center text-sm p-4 rounded-xl bg-background/30 border border-white/5">
                 <span>Time Taken:</span>
@@ -280,9 +280,19 @@ export default function MockTestPage() {
         <Card className="lg:col-span-5 shadow-xl border-white/5 bg-card/40 overflow-hidden">
           <CardHeader className="p-8">
             <Badge variant="outline" className="mb-4 w-fit border-secondary/30 text-secondary">{currentQuestion.category}</Badge>
-            <CardTitle className="text-2xl font-bold leading-tight text-secondary">
+            <CardTitle className="text-2xl font-bold leading-tight text-secondary mb-6">
               {currentQuestion.text}
             </CardTitle>
+            {currentQuestion.imageUrl && (
+              <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/10 mb-6 bg-muted">
+                <Image 
+                  src={currentQuestion.imageUrl} 
+                  alt="Question Illustration" 
+                  fill 
+                  className="object-cover"
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-8 pt-0 space-y-4">
             {currentQuestion.options.map((option, idx) => {

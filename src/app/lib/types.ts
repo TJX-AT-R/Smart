@@ -5,6 +5,7 @@ export interface Question {
   options: string[];
   correctAnswer: string;
   category: string;
+  imageUrl?: string;
 }
 
 export interface LessonModule {
