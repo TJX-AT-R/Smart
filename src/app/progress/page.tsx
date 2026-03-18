@@ -14,6 +14,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } fro
 export default function ProgressPage() {
   const { user } = useUser()
   const db = useFirestore()
+  const passThreshold = 92
 
   const testsQuery = useMemoFirebase(() => {
     if (!db || !user) return null
@@ -35,7 +36,7 @@ export default function ProgressPage() {
       ? Math.max(...tests.map(t => t.scorePercentage)) 
       : 0,
     passRate: tests?.length
-      ? Math.round((tests.filter(t => t.scorePercentage >= 86).length / tests.length) * 100)
+      ? Math.round((tests.filter(t => t.scorePercentage >= passThreshold).length / tests.length) * 100)
       : 0
   }
 
@@ -69,7 +70,7 @@ export default function ProgressPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.avgScore}%</div>
-            <p className="text-xs opacity-70 mt-1">Passing mark is 86%</p>
+            <p className="text-xs opacity-70 mt-1">Passing mark is {passThreshold}%</p>
           </CardContent>
         </Card>
         <Card>
@@ -105,7 +106,7 @@ export default function ProgressPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">{stats.passRate}%</div>
-            <p className="text-xs text-muted-foreground mt-1">Tests scored 86%+</p>
+            <p className="text-xs text-muted-foreground mt-1">Tests scored {passThreshold}%+</p>
           </CardContent>
         </Card>
       </div>
@@ -136,9 +137,6 @@ export default function ProgressPage() {
                     axisLine={false} 
                     domain={[0, 100]}
                     tickFormatter={(value) => `${value}%`}
-                  />
-                  <Tooltip 
-                    content={<ChartTooltipContent />} 
                   />
                   <Line 
                     type="monotone" 
@@ -178,8 +176,8 @@ export default function ProgressPage() {
                       {test.scorePercentage}%
                     </TableCell>
                     <TableCell>
-                      <Badge variant={test.scorePercentage >= 86 ? "secondary" : "destructive"}>
-                        {test.scorePercentage >= 86 ? "PASS" : "FAIL"}
+                      <Badge variant={test.scorePercentage >= passThreshold ? "secondary" : "destructive"}>
+                        {test.scorePercentage >= passThreshold ? "PASS" : "FAIL"}
                       </Badge>
                     </TableCell>
                   </TableRow>

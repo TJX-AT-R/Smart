@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -19,8 +18,9 @@ export default function MockTestPage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
-  const totalQuestions = 10 // Adjusted to match available data or preferred length
-  const initialTime = 8 * 60 // 8 minutes in seconds
+  const totalQuestions = 25
+  const passThresholdPercent = 92 // (23/25) * 100
+  const initialTime = 20 * 60 // 20 minutes for 25 questions
 
   const [testQuestions, setTestQuestions] = useState(MOCK_QUESTIONS.slice(0, totalQuestions))
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -61,6 +61,8 @@ export default function MockTestPage() {
 
     answers.forEach((answer, index) => {
       const question = testQuestions[index]
+      if (!question) return
+      
       const answerRef = doc(collection(db, "users", user.uid, "testAttempts", testAttemptRef.id, "userAnswers"))
       
       const answerData = {
@@ -102,7 +104,7 @@ export default function MockTestPage() {
     
     let finalScore = 0
     userAnswers.forEach((answer, index) => {
-      if (answer === testQuestions[index].correctAnswer) {
+      if (testQuestions[index] && answer === testQuestions[index].correctAnswer) {
         finalScore++
       }
     })
@@ -158,7 +160,7 @@ export default function MockTestPage() {
           </div>
           <h1 className="text-4xl font-bold text-primary">Official Mock Test</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            This test consists of {totalQuestions} questions. You have exactly 8 minutes to complete it.
+            This test consists of {totalQuestions} questions. You have exactly {initialTime / 60} minutes to complete it.
           </p>
         </div>
 
@@ -169,7 +171,7 @@ export default function MockTestPage() {
           <CardContent className="space-y-4 text-sm">
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-0.5" size={16} />
-              <span>Pass mark is 86% ({Math.ceil(totalQuestions * 0.86)} out of {totalQuestions})</span>
+              <span>Pass mark is {passThresholdPercent}% (23 out of 25)</span>
             </div>
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-0.5" size={16} />
@@ -192,7 +194,7 @@ export default function MockTestPage() {
 
   if (isFinished) {
     const percentage = Math.round((score / totalQuestions) * 100)
-    const passed = percentage >= 86
+    const passed = percentage >= passThresholdPercent
 
     return (
       <div className="max-w-2xl mx-auto py-12 animate-in zoom-in-95 duration-500">
@@ -227,7 +229,7 @@ export default function MockTestPage() {
               <h4 className="font-semibold text-primary">Summary</h4>
               <div className="flex justify-between items-center text-sm p-4 rounded-xl bg-background/30 border border-white/5">
                 <span>Pass Requirement:</span>
-                <span className="font-bold">{Math.ceil(totalQuestions * 0.86)} Correct</span>
+                <span className="font-bold">23 Correct</span>
               </div>
               <div className="flex justify-between items-center text-sm p-4 rounded-xl bg-background/30 border border-white/5">
                 <span>Time Taken:</span>
@@ -257,6 +259,8 @@ export default function MockTestPage() {
   const currentQuestion = testQuestions[currentIndex]
   const progress = ((currentIndex + 1) / totalQuestions) * 100
   const selectedOption = userAnswers[currentIndex]
+
+  if (!currentQuestion) return null
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">

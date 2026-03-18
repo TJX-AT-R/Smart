@@ -1,8 +1,7 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "react-router-dom"
+import { useParams, useRouter } from "next/navigation"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
 import { collection, query, orderBy, doc, getDoc, limit, setDoc, serverTimestamp } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -17,13 +16,15 @@ import { useToast } from "@/hooks/use-toast"
 const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 
 export default function AdminUserProgressPage() {
-  const { userId } = useParams()
+  const params = useParams()
+  const userId = params.userId as string
   const { user, isUserLoading: isAuthLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
   const { toast } = useToast()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [isGranting, setIsGranting] = useState<string | null>(null)
+  const passThreshold = 92
 
   useEffect(() => {
     async function verifyAdmin() {
@@ -46,16 +47,16 @@ export default function AdminUserProgressPage() {
     verifyAdmin()
   }, [user, isAuthLoading, router, db])
 
-  const memoizedUserRef = useMemoFirebase(() => {
+  const learnerRef = useMemoFirebase(() => {
     if (!db || !userId) return null
-    return doc(db, "users", userId as string)
+    return doc(db, "users", userId)
   }, [db, userId])
   const { data: learner, isLoading: isUserLoading } = useDoc(learnerRef)
 
   const testsQuery = useMemoFirebase(() => {
     if (!db || !userId || isAdmin === null) return null
     return query(
-      collection(db, "users", userId as string, "testAttempts"),
+      collection(db, "users", userId, "testAttempts"),
       orderBy("createdAt", "desc"),
       limit(20)
     )
@@ -65,7 +66,7 @@ export default function AdminUserProgressPage() {
 
   const purchasesQuery = useMemoFirebase(() => {
     if (!db || !userId || isAdmin === null) return null
-    return collection(db, "users", userId as string, "purchases")
+    return collection(db, "users", userId, "purchases")
   }, [db, userId, isAdmin])
 
   const { data: userPurchases, isLoading: isPurchasesLoading } = useCollection(purchasesQuery)
@@ -79,7 +80,7 @@ export default function AdminUserProgressPage() {
     
     setIsGranting(resourceId)
     try {
-      const purchaseRef = doc(collection(db, "users", userId as string, "purchases"))
+      const purchaseRef = doc(collection(db, "users", userId, "purchases"))
       await setDoc(purchaseRef, {
         id: purchaseRef.id,
         userId: userId,
@@ -115,7 +116,7 @@ export default function AdminUserProgressPage() {
       ? Math.max(...tests.map(t => t.scorePercentage)) 
       : 0,
     passRate: tests?.length
-      ? Math.round((tests.filter(t => t.scorePercentage >= 86).length / tests.length) * 100)
+      ? Math.round((tests.filter(t => t.scorePercentage >= passThreshold).length / tests.length) * 100)
       : 0
   }
 
@@ -279,8 +280,8 @@ export default function AdminUserProgressPage() {
                       <TableCell className="capitalize text-white">{test.type.replace("-", " ")}</TableCell>
                       <TableCell className="font-bold text-white">{test.scorePercentage}%</TableCell>
                       <TableCell>
-                        <Badge variant={test.scorePercentage >= 86 ? "secondary" : "destructive"} className="px-3">
-                          {test.scorePercentage >= 86 ? "PASS" : "FAIL"}
+                        <Badge variant={test.scorePercentage >= passThreshold ? "secondary" : "destructive"} className="px-3">
+                          {test.scorePercentage >= passThreshold ? "PASS" : "FAIL"}
                         </Badge>
                       </TableCell>
                     </TableRow>

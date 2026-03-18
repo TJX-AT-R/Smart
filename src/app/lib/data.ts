@@ -1,4 +1,3 @@
-
 import { Question, LessonModule, StudyResource } from './types';
 
 export const MOCK_QUESTIONS: Question[] = [
@@ -94,6 +93,97 @@ export const MOCK_QUESTIONS: Question[] = [
     text: 'Which arm signal tells you a driver intends to pull up?',
     options: ['Arm moving up and down', 'Arm pointing left', 'Arm moving in a circle'],
     correctAnswer: 'Arm moving up and down',
+    category: 'Rules of the Road'
+  },
+  {
+    id: 'q13',
+    text: 'What is the minimum depth of tread for car tires?',
+    options: ['1.0 mm', '1.6 mm', '2.5 mm'],
+    correctAnswer: '1.6 mm',
+    category: 'Safety'
+  },
+  {
+    id: 'q14',
+    text: 'When should you use your fog lights?',
+    options: ['When it is raining', 'When visibility is less than 100 meters', 'Always at night'],
+    correctAnswer: 'When visibility is less than 100 meters',
+    category: 'Safety'
+  },
+  {
+    id: 'q15',
+    text: 'What should you do if your vehicle breaks down on a motorway?',
+    options: ['Wait in the car', 'Stay on the hard shoulder', 'Get out and walk to the nearest exit'],
+    correctAnswer: 'Stay on the hard shoulder',
+    category: 'Motorway'
+  },
+  {
+    id: 'q16',
+    text: 'What does a red triangle sign mean?',
+    options: ['Mandatory instruction', 'Warning', 'Information'],
+    correctAnswer: 'Warning',
+    category: 'Road Signs'
+  },
+  {
+    id: 'q17',
+    text: 'How should you react to a driver following too closely?',
+    options: ['Brake sharply', 'Speed up', 'Increase your gap to the car in front'],
+    correctAnswer: 'Increase your gap to the car in front',
+    category: 'Safety'
+  },
+  {
+    id: 'q18',
+    text: 'When can you cross a double solid white line?',
+    options: ['To overtake a cyclist moving at 10mph or less', 'Never', 'When the road is clear'],
+    correctAnswer: 'To overtake a cyclist moving at 10mph or less',
+    category: 'Rules of the Road'
+  },
+  {
+    id: 'q19',
+    text: 'What is the purpose of the catalytic converter?',
+    options: ['To reduce fuel consumption', 'To reduce toxic exhaust emissions', 'To improve engine cooling'],
+    correctAnswer: 'To reduce toxic exhaust emissions',
+    category: 'Safety'
+  },
+  {
+    id: 'q20',
+    text: 'What does a blue circular sign mean?',
+    options: ['Warning', 'Positive instruction/Mandatory', 'Prohibition'],
+    correctAnswer: 'Positive instruction/Mandatory',
+    category: 'Road Signs'
+  },
+  {
+    id: 'q21',
+    text: 'In which weather condition are you most likely to experience aquaplaning?',
+    options: ['Fog', 'Heavy rain', 'Icy roads'],
+    correctAnswer: 'Heavy rain',
+    category: 'Safety'
+  },
+  {
+    id: 'q22',
+    text: 'What is the standard "thinking distance" at 30mph?',
+    options: ['9 meters', '12 meters', '15 meters'],
+    correctAnswer: '9 meters',
+    category: 'Safety'
+  },
+  {
+    id: 'q23',
+    text: 'What should you do if you miss your exit on a motorway?',
+    options: ['Reverse back', 'Carry on to the next exit', 'Do a U-turn across the central reservation'],
+    correctAnswer: 'Carry on to the next exit',
+    category: 'Motorway'
+  },
+  {
+    id: 'q24',
+    text: 'What is the main cause of skidding?',
+    options: ['The driver', 'The road surface', 'The vehicle brakes'],
+    correctAnswer: 'The driver',
+    category: 'Safety'
+  },
+  {
+    id: 'q25',
+    text: 'What does a flashing amber light at a pelican crossing mean?',
+    options: ['Stop and wait for the green light', 'Give way to pedestrians on the crossing', 'Proceed with caution'],
+    correctAnswer: 'Give way to pedestrians on the crossing',
     category: 'Rules of the Road'
   }
 ];

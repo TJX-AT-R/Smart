@@ -69,7 +69,7 @@ export default function DashboardPage() {
               {isTestsLoading ? <Loader2 className="h-5 w-5 animate-spin inline" /> : `${avgMockScore}%`}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {avgMockScore >= 86 ? "Meeting pass standard" : "Aim for 86%+"}
+              {avgMockScore >= 92 ? "Meeting pass standard" : "Aim for 92%+"}
             </p>
           </CardContent>
         </Card>
