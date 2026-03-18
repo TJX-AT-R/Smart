@@ -1,9 +1,10 @@
+
 "use client"
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser, useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
@@ -71,6 +72,10 @@ export default function LandingPage() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-background border-l-white/10">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetDescription>Access site features and account settings.</SheetDescription>
+              </SheetHeader>
               <nav className="flex flex-col gap-6 mt-12">
                 <Link 
                   className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
