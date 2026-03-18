@@ -75,6 +75,12 @@ service cloud.firestore {
       }
     }
 
+    // Question Bank (Admin managed, globally readable by signed-in users)
+    match /questions/{questionId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /topics/{topicId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
