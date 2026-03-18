@@ -14,6 +14,7 @@
         "registrationDate": { "type": "string", "format": "date-time" },
         "lastLoginDate": { "type": "string", "format": "date-time" },
         "isAdmin": { "type": "boolean" },
+        "isPremium": { "type": "boolean", "description": "Whether the user has global access to all premium content." },
         "createdAt": { "type": "object", "description": "Firestore ServerTimestamp" }
       },
       "required": ["id", "email", "firstName", "lastName", "registrationDate"]

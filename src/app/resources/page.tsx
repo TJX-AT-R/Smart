@@ -1,13 +1,13 @@
 
 "use client"
 
-import { useState, useRef } from "react"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useState, useRef, useMemo } from "react"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
 import { MOCK_RESOURCES } from "../lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, ShoppingCart, Sparkles, Smartphone, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck } from "lucide-react"
+import { Download, ShoppingCart, Sparkles, Smartphone, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck, Crown } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import {
@@ -42,6 +42,12 @@ export default function ResourcesPage() {
   
   const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }))
 
+  const userDocRef = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return doc(db, "users", user.uid)
+  }, [db, user])
+  const { data: userData } = useDoc(userDocRef)
+
   const purchasesQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return collection(db, "users", user.uid, "purchases")
@@ -50,6 +56,7 @@ export default function ResourcesPage() {
   const { data: userPurchases } = useCollection(purchasesQuery)
 
   const hasAccess = (resourceId: string) => {
+    if (userData?.isPremium) return true
     return userPurchases?.some(p => p.studyResourceId === resourceId)
   }
 
@@ -111,7 +118,14 @@ export default function ResourcesPage() {
       <section className="relative p-6 sm:p-12 rounded-3xl bg-primary/20 border border-secondary/30 overflow-hidden text-center sm:text-left shadow-2xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-secondary/10 rounded-full blur-3xl opacity-50" />
         <div className="relative z-10 max-w-3xl">
-          <Badge className="bg-secondary text-white mb-4 uppercase tracking-widest text-[10px] font-bold">SmartPass Exclusive</Badge>
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
+            <Badge className="bg-secondary text-white uppercase tracking-widest text-[10px] font-bold">SmartPass Exclusive</Badge>
+            {userData?.isPremium && (
+              <Badge className="bg-amber-500 text-white uppercase tracking-widest text-[10px] font-bold flex items-center gap-1">
+                <Crown size={10} /> Global Access Active
+              </Badge>
+            )}
+          </div>
           <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 italic uppercase tracking-tighter">Study Resources</h1>
           <p className="text-muted-foreground text-base sm:text-xl leading-relaxed">
             Unlock premium PDF study booklets via <span className="text-secondary font-bold">EcoCash USSD Push</span>. Direct settlement to official merchant.
