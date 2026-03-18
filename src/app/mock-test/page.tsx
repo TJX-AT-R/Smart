@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -21,7 +20,7 @@ export default function MockTestPage() {
   const db = useFirestore()
   const totalQuestions = 25
   const passThresholdPercent = 92
-  const initialTime = 20 * 60
+  const initialTime = 8 * 60 // Updated to 8 minutes
 
   const [testQuestions, setTestQuestions] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)

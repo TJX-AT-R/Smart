@@ -1,4 +1,3 @@
-
 "use client"
 
 import Link from "next/link"
@@ -222,7 +221,7 @@ export default function LandingPage() {
               <FeatureCard 
                 icon={<Clock size={32} />}
                 title="Timed Mock Tests"
-                description="Practice with 20-minute timed sessions that feel like the real thing."
+                description="Practice with 8-minute timed sessions that feel like the real thing."
               />
             </div>
           </div>
