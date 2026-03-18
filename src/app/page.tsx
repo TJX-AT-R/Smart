@@ -2,60 +2,73 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Sparkles, Menu } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Sparkles, Menu, ArrowRight } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useState } from "react"
+import { useUser } from "@/firebase"
 
 export default function LandingPage() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useUser();
 
   return (
-    <div className="flex flex-col min-h-screen bg-background/95">
-      <header className="px-6 lg:px-12 h-20 flex items-center border-b sticky top-0 bg-background/80 backdrop-blur-md z-50">
+    <div className="flex flex-col min-h-screen bg-transparent">
+      <header className="px-6 lg:px-12 h-20 flex items-center border-b border-white/5 sticky top-0 bg-background/40 backdrop-blur-xl z-50">
         <Link className="flex items-center justify-center gap-2" href="/">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white">
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white border border-white/10">
             <Car size={24} />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-primary">DriveSmart Coach</span>
+          <span className="text-2xl font-bold tracking-tight text-white">DriveSmart</span>
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="ml-auto hidden md:flex gap-6 sm:gap-10">
-          <Link className="text-sm font-medium hover:text-secondary transition-colors" href="#features">
+        <nav className="ml-auto hidden md:flex gap-6 sm:gap-10 items-center">
+          <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#features">
             Features
           </Link>
-          <Link className="text-sm font-medium hover:text-secondary transition-colors" href="/dashboard">
-            Login
-          </Link>
+          {user ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/dashboard">Go to Dashboard</Link>
+            </Button>
+          ) : (
+            <div className="flex items-center gap-4">
+              <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/login">
+                Login
+              </Link>
+              <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+                <Link href="/login">Get Started</Link>
+              </Button>
+            </div>
+          )}
         </nav>
 
         {/* Mobile Hamburger Menu */}
         <div className="ml-auto md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-white">
                 <Menu size={24} />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-background">
-              <nav className="flex flex-col gap-4 mt-8">
+            <SheetContent side="right" className="bg-background border-l-white/10">
+              <nav className="flex flex-col gap-6 mt-12">
                 <Link 
-                  className="text-lg font-medium hover:text-secondary p-2 transition-colors" 
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
                   href="#features"
                   onClick={() => setIsOpen(false)}
                 >
                   Features
                 </Link>
                 <Link 
-                  className="text-lg font-medium hover:text-secondary p-2 transition-colors" 
-                  href="/dashboard"
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                  href="/login"
                   onClick={() => setIsOpen(false)}
                 >
-                  Login
+                  {user ? "Dashboard" : "Login"}
                 </Link>
-                <Button asChild className="mt-4 bg-primary text-primary-foreground">
-                  <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-                    Get Started
+                <Button asChild className="mt-4 bg-secondary text-secondary-foreground h-14 text-lg">
+                  <Link href="/login" onClick={() => setIsOpen(false)}>
+                    {user ? "Go to Dashboard" : "Start Learning"}
                   </Link>
                 </Button>
               </nav>
@@ -65,101 +78,114 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 px-6 overflow-hidden">
+        <section className="w-full py-20 md:py-32 lg:py-48 px-6 relative overflow-hidden">
           <div className="container mx-auto">
             <div className="grid gap-12 lg:grid-cols-2 items-center">
-              <div className="flex flex-col justify-center space-y-8 animate-in slide-in-from-left duration-700">
-                <div className="space-y-4">
-                  <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl xl:text-7xl/none text-primary">
-                    Pass Your Theory Test <span className="text-secondary underline decoration-4 underline-offset-8">First Time</span>
+              <div className="flex flex-col justify-center space-y-10 animate-in slide-in-from-left duration-700 relative z-10">
+                <div className="space-y-6">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-sm font-semibold">
+                    <Sparkles size={14} />
+                    <span>AI-Powered Learning</span>
+                  </div>
+                  <h1 className="text-5xl font-extrabold tracking-tighter sm:text-6xl xl:text-8xl/none text-white">
+                    Pass Your Theory <span className="text-secondary">First Time</span>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl leading-relaxed">
-                    Personalized driving theory coach with AI-powered explanations, official question banks, and realistic mock tests.
+                    The ultimate driving theory coach with realistic mock tests and smart AI explanations for every mistake.
                   </p>
                 </div>
                 <div className="flex flex-col gap-4 min-[400px]:flex-row">
-                  <Button asChild size="lg" className="h-14 px-8 text-lg bg-primary hover:bg-primary/90">
-                    <Link href="/dashboard">Start Learning Free</Link>
+                  <Button asChild size="lg" className="h-16 px-10 text-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-xl shadow-secondary/20">
+                    <Link href="/login">Get Started Free</Link>
                   </Button>
-                  <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg border-2 border-primary/20 hover:bg-primary/5">
-                    <Link href="#features">Explore Features</Link>
+                  <Button asChild variant="outline" size="lg" className="h-16 px-10 text-xl border-white/10 hover:bg-white/5 text-white">
+                    <Link href="#features">How it works</Link>
                   </Button>
                 </div>
                 <div className="flex items-center gap-8 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="text-secondary h-4 w-4" />
+                    <CheckCircle className="text-secondary h-5 w-5" />
                     <span>Official DVSA Bank</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="text-secondary h-4 w-4" />
+                    <CheckCircle className="text-secondary h-5 w-5" />
                     <span>AI Tutor Included</span>
                   </div>
                 </div>
               </div>
-              <div className="relative animate-in zoom-in duration-700 delay-200">
-                <div className="absolute -inset-4 bg-secondary/10 rounded-full blur-3xl" />
-                <img
-                  alt="DriveSmart Dashboard"
-                  className="relative mx-auto rounded-2xl shadow-2xl border-4 border-white object-cover aspect-[4/3] w-full"
-                  src="https://picsum.photos/seed/dash/800/600"
-                  data-ai-hint="driving app"
-                />
+              <div className="relative animate-in zoom-in duration-1000 delay-200">
+                <div className="absolute -inset-20 bg-secondary/20 rounded-full blur-[120px] opacity-30" />
+                <div className="relative border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+                  <img
+                    alt="DriveSmart Dashboard Preview"
+                    className="w-full object-cover aspect-[4/3]"
+                    src="https://picsum.photos/seed/theory-test/1000/750"
+                    data-ai-hint="driving simulator dashboard"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="features" className="w-full py-24 bg-primary/5">
+        <section id="features" className="w-full py-32 relative">
           <div className="container mx-auto px-6">
-            <div className="text-center space-y-4 mb-16">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-primary">Master the Road</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">Everything you need to succeed in one clean, easy-to-use platform.</p>
+            <div className="text-center space-y-4 mb-20">
+              <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-white">Everything You Need</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Clean, efficient tools designed for one purpose: helping you pass.</p>
             </div>
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-white p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary mb-6">
-                  <BookOpen size={24} />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-primary">Theory Modules</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Structured lessons covering essential topics, road signs, and hazard perception rules.
-                </p>
-              </div>
-              <div className="bg-white p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary mb-6">
-                  <Sparkles size={24} />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-primary">AI Smart Tutor</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Get detailed, AI-generated explanations for incorrect answers to truly understand the reasoning.
-                </p>
-              </div>
-              <div className="bg-white p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary mb-6">
-                  <Clock size={24} />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-primary">Realistic Mock Tests</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Timed tests designed to mimic the format and difficulty of the official driving theory exam.
-                </p>
-              </div>
+              <FeatureCard 
+                icon={<BookOpen size={32} />}
+                title="Theory Modules"
+                description="Comprehensive lessons structured to follow the official DVSA syllabus."
+              />
+              <FeatureCard 
+                icon={<Sparkles size={32} />}
+                title="AI Smart Tutor"
+                description="Get personalized explanations for every question you get wrong."
+                highlight
+              />
+              <FeatureCard 
+                icon={<Clock size={32} />}
+                title="Timed Mock Tests"
+                description="Practice with 8-minute timed sessions that feel like the real thing."
+              />
             </div>
           </div>
         </section>
       </main>
-      <footer className="border-t py-12 px-6">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      
+      <footer className="border-t border-white/5 py-16 px-6 bg-muted/20 backdrop-blur-sm">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="flex items-center gap-2">
-            <Car className="text-primary h-6 w-6" />
-            <span className="font-bold text-lg text-primary">DriveSmart Coach</span>
+            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-white border border-white/10">
+              <Car size={18} />
+            </div>
+            <span className="font-bold text-xl text-white">DriveSmart</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2024 DriveSmart Coach. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link className="text-sm text-muted-foreground hover:text-primary" href="#">Privacy</Link>
-            <Link className="text-sm text-muted-foreground hover:text-primary" href="#">Terms</Link>
+          <p className="text-sm text-muted-foreground">© 2024 DriveSmart Coach. Built for future drivers.</p>
+          <div className="flex gap-8">
+            <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Privacy</Link>
+            <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Terms</Link>
           </div>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function FeatureCard({ icon, title, description, highlight = false }: { icon: any, title: string, description: string, highlight?: boolean }) {
+  return (
+    <div className={`p-10 rounded-3xl border transition-all duration-300 hover:-translate-y-1 ${highlight ? 'bg-primary/40 border-secondary/30 shadow-2xl shadow-secondary/5' : 'bg-card/30 border-white/5 hover:border-white/10'}`}>
+      <div className="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary mb-8">
+        {icon}
+      </div>
+      <h3 className="text-2xl font-bold mb-4 text-white">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed text-lg">
+        {description}
+      </p>
     </div>
   )
 }
