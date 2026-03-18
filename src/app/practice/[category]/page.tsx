@@ -1,17 +1,18 @@
 
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { MOCK_QUESTIONS } from "@/app/lib/data"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, ChevronRight, Loader2, Info } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, query, where } from "firebase/firestore"
 import Image from "next/image"
+import { AIExplanation } from "@/components/AIExplanation"
 
 export default function CategoryPracticePage() {
   const { category } = useParams()
@@ -25,7 +26,6 @@ export default function CategoryPracticePage() {
   const [score, setScore] = useState(0)
   const [showResults, setShowResults] = useState(false)
 
-  // Fetch questions from Firestore for this category
   const qRef = useMemoFirebase(() => {
     if (!db) return null
     return query(collection(db, "questions"), where("category", "==", decodedCategory))
@@ -201,7 +201,7 @@ export default function CategoryPracticePage() {
                 className={`
                   w-full text-left p-4 sm:p-6 rounded-2xl border-2 transition-all flex items-center justify-between gap-4 group
                   ${isSelected && !isAnswered ? 'border-secondary bg-secondary/5' : 'border-white/5 bg-primary/5 hover:border-white/20 hover:bg-primary/10'}
-                  ${isCorrect ? 'border-secondary bg-secondary/10 text-secondary' : ''}
+                  ${isCorrect ? 'border-secondary bg-secondary/10 text-secondary ring-2 ring-secondary/50' : ''}
                   ${isWrong ? 'border-destructive bg-destructive/10 text-destructive' : ''}
                   ${isAnswered && !isSelected && !isCorrect ? 'opacity-30' : ''}
                 `}
@@ -210,18 +210,36 @@ export default function CategoryPracticePage() {
                    <div className={`
                     w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 transition-colors
                     ${isSelected ? 'bg-secondary text-white' : 'bg-muted/20 text-muted-foreground group-hover:bg-muted/40'}
-                    ${isCorrect ? 'bg-secondary text-white' : ''}
+                    ${isCorrect ? 'bg-secondary text-white shadow-lg shadow-secondary/20' : ''}
                     ${isWrong ? 'bg-destructive text-white' : ''}
                   `}>
                     {label}
                   </div>
-                  <span className={`text-sm sm:text-lg flex-1 leading-snug ${isSelected || isCorrect ? 'font-bold' : ''}`}>{option}</span>
+                  <span className={`text-sm sm:text-lg flex-1 leading-snug ${isSelected || isCorrect ? 'font-bold text-white' : ''}`}>{option}</span>
                 </div>
-                {isCorrect && <CheckCircle2 className="h-6 w-6 text-secondary shrink-0" />}
+                {isCorrect && <CheckCircle2 className="h-6 w-6 text-secondary shrink-0 animate-in zoom-in duration-300" />}
                 {isWrong && <XCircle className="h-6 w-6 text-destructive shrink-0" />}
               </button>
             )
           })}
+
+          {isAnswered && (
+            <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 duration-500">
+              <div className="p-6 rounded-2xl bg-secondary/10 border border-secondary/20">
+                 <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-2 flex items-center gap-2">
+                   <CheckCircle2 size={14} /> Official Explanation
+                 </p>
+                 <p className="text-sm text-foreground leading-relaxed">
+                   {currentQuestion.explanation || "No manual explanation provided for this scenario. Use the AI tool below for deep analysis."}
+                 </p>
+              </div>
+              <AIExplanation 
+                question={currentQuestion.text}
+                userAnswer={selectedOption || ""}
+                correctAnswer={currentQuestion.correctAnswer}
+              />
+            </div>
+          )}
         </CardContent>
         <CardFooter className="p-6 sm:p-10 bg-muted/5 flex justify-end border-t border-white/5">
           {!isAnswered ? (
