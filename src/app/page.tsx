@@ -177,7 +177,7 @@ export default function LandingPage() {
                 <div className="flex flex-wrap justify-center lg:justify-start items-center gap-4 sm:gap-8 text-xs sm:text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="text-secondary h-4 w-4 sm:h-5 sm:w-5" />
-                    <span>Official DVSA Bank</span>
+                    <span>Guaranteed Pass</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="text-secondary h-4 w-4 sm:h-5 sm:w-5" />
@@ -211,7 +211,7 @@ export default function LandingPage() {
               <FeatureCard 
                 icon={<BookOpen size={32} />}
                 title="Theory Modules"
-                description="Comprehensive lessons structured to follow the official DVSA syllabus."
+                description="Comprehensive lessons structured to follow the official syllabus."
               />
               <FeatureCard 
                 icon={<ShieldCheck size={32} />}
