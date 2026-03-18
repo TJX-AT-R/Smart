@@ -72,7 +72,7 @@ export default function ResourcesPage() {
     setPayStep('processing')
     
     // Simulate network delay for USSD push
-    await new Promise(resolve => setTimeout(resolve, 4000))
+    await new Promise(resolve => setTimeout(resolve, 3000))
 
     if (!db || !user || !selectedResource) return
 
@@ -84,20 +84,17 @@ export default function ResourcesPage() {
         id: purchaseRef.id,
         userId: user.uid,
         studyResourceId: selectedResource.id,
-        resourceTitle: selectedResource.title,
         purchaseDate: new Date().toISOString(),
         amountPaidDollars: selectedResource.priceDollars,
         transactionId: transactionId,
         paymentMethod: "EcoCash",
         ecoCashNumber: phoneNumber,
         recipientNumber: ADMIN_ECOCASH_NUMBER,
-        status: "verified",
         createdAt: serverTimestamp()
       }
 
       await setDoc(purchaseRef, purchaseData)
       setPayStep('success')
-      toast({ title: "Payment Successful", description: `Funds sent to ${ADMIN_ECOCASH_NUMBER}. Access granted.` })
     } catch (error: any) {
       toast({ variant: "destructive", title: "Payment Failed", description: error.message })
       setPayStep('input')
@@ -149,7 +146,7 @@ export default function ResourcesPage() {
                   <div className="absolute bottom-6 left-6 right-6">
                     <h3 className="text-xl font-bold text-white line-clamp-1">{res.title}</h3>
                     <Badge variant="secondary" className="mt-2 bg-secondary/20 text-secondary border-none">
-                      {hasAccess(res.id) ? "Access Granted" : `$${res.priceDollars}.00`}
+                      {hasAccess(res.id) ? "Owned" : `$${res.priceDollars}.00`}
                     </Badge>
                   </div>
                 </div>
@@ -179,7 +176,7 @@ export default function ResourcesPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-start">
                       <Badge variant="secondary" className="text-[9px] h-5 bg-secondary/10 text-secondary border-secondary/20 uppercase">
-                        {owned ? "Premium" : "Market"}
+                        {owned ? "Unlocked" : "Locked"}
                       </Badge>
                       <span className="text-lg font-bold text-white">${res.priceDollars}.00</span>
                     </div>
@@ -220,7 +217,7 @@ export default function ResourcesPage() {
               <Wallet className="text-secondary" /> EcoCash USSD Push
             </DialogTitle>
             <DialogDescription>
-              Purchase: <span className="text-white font-bold">{selectedResource?.title}</span>
+              Purchasing: <span className="text-white font-bold">{selectedResource?.title}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -228,8 +225,8 @@ export default function ResourcesPage() {
             <div className="space-y-6 py-4">
               <div className="p-4 rounded-xl bg-primary/20 border border-white/10 flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Recipient Merchant</p>
-                  <p className="text-sm font-bold text-white">SmartPass Admin</p>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Recipient</p>
+                  <p className="text-sm font-bold text-white">SmartPass Official</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Merchant No.</p>
@@ -251,15 +248,15 @@ export default function ResourcesPage() {
               <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <ShieldCheck size={14} className="text-secondary" />
-                  <p className="text-xs text-secondary font-bold uppercase">Safe Transaction</p>
+                  <p className="text-xs text-secondary font-bold uppercase">Secure Verification</p>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Funds will be directed to <span className="text-white font-bold">{ADMIN_ECOCASH_NUMBER}</span>. A secure push prompt will appear on your handset shortly.
+                  Funds directed to {ADMIN_ECOCASH_NUMBER}. You will receive a USSD push prompt on your mobile device.
                 </p>
               </div>
 
               <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-12 text-lg" onClick={processEcoCashPayment}>
-                Authorize ${selectedResource?.priceDollars}.00
+                Pay ${selectedResource?.priceDollars}.00
               </Button>
             </div>
           )}
@@ -283,11 +280,11 @@ export default function ResourcesPage() {
                 <CheckCircle2 size={48} />
               </div>
               <div className="text-center space-y-2">
-                <p className="font-bold text-white text-2xl">Payment Confirmed!</p>
-                <p className="text-sm text-muted-foreground">Access granted to official premium resources.</p>
+                <p className="font-bold text-white text-2xl">Payment Verified!</p>
+                <p className="text-sm text-muted-foreground">Content unlocked. You can now download the PDF booklet.</p>
               </div>
               <Button className="w-full bg-secondary text-white" onClick={() => setIsPaying(false)}>
-                Download Booklet <ArrowRight className="ml-2 h-4 w-4" />
+                Got it <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           )}
