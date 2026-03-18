@@ -26,6 +26,9 @@ export default function LandingPage() {
           <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#features">
             Features
           </Link>
+          <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/resources">
+            Study Resources
+          </Link>
           {user ? (
             <Button asChild variant="secondary" size="sm">
               <Link href="/dashboard">Go to Dashboard</Link>
@@ -58,6 +61,13 @@ export default function LandingPage() {
                   onClick={() => setIsOpen(false)}
                 >
                   Features
+                </Link>
+                <Link 
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                  href="/resources"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Study Resources
                 </Link>
                 <Link 
                   className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
