@@ -71,6 +71,21 @@
         "createdAt": { "type": "object" }
       },
       "required": ["id", "userId", "scorePercentage"]
+    },
+    "LessonProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LessonProgress",
+      "type": "object",
+      "description": "Tracking completion of specific theory modules.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "completionDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["id", "userId", "lessonId", "isCompleted"]
     }
   },
   "auth": {
@@ -108,6 +123,14 @@
           "entityName": "TestAttempt",
           "schema": { "$ref": "#/backend/entities/TestAttempt" },
           "description": "Mock test results."
+        }
+      },
+      {
+        "path": "/users/{userId}/lessonProgress/{progressId}",
+        "definition": {
+          "entityName": "LessonProgress",
+          "schema": { "$ref": "#/backend/entities/LessonProgress" },
+          "description": "Real-time module tracking."
         }
       }
     ]
