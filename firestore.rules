@@ -20,9 +20,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the authenticated user has an admin role. */
+    /** @description Checks if the authenticated user has an admin role or is the designated super admin email. */
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
+        request.auth.token.email == 'ncubethubelihle483@gmail.com'
+      );
     }
 
     function isExistingOwner(userId) {
@@ -40,66 +43,66 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow update: if isExistingOwner(userId) || isAdmin();
+      allow delete: if isExistingOwner(userId) || isAdmin();
 
       match /lessonProgress/{lessonProgressId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && isDataConsistent(userId);
-        allow update: if isExistingOwner(userId) && isDataConsistent(userId);
-        allow delete: if isExistingOwner(userId);
+        allow update: if (isExistingOwner(userId) && isDataConsistent(userId)) || isAdmin();
+        allow delete: if isExistingOwner(userId) || isAdmin();
       }
 
       match /testAttempts/{testAttemptId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && isDataConsistent(userId);
-        allow update: if isExistingOwner(userId) && isDataConsistent(userId);
-        allow delete: if isExistingOwner(userId);
+        allow update: if (isExistingOwner(userId) && isDataConsistent(userId)) || isAdmin();
+        allow delete: if isExistingOwner(userId) || isAdmin();
 
         match /userAnswers/{userAnswerId} {
           allow get, list: if isOwner(userId) || isAdmin();
           allow create: if isOwner(userId);
-          allow update: if isExistingOwner(userId);
-          allow delete: if isExistingOwner(userId);
+          allow update: if isExistingOwner(userId) || isAdmin();
+          allow delete: if isExistingOwner(userId) || isAdmin();
         }
       }
 
       match /purchases/{purchaseId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && isDataConsistent(userId);
-        allow update: if isExistingOwner(userId) && isDataConsistent(userId);
-        allow delete: if isExistingOwner(userId);
+        allow update: if (isExistingOwner(userId) && isDataConsistent(userId)) || isAdmin();
+        allow delete: if isExistingOwner(userId) || isAdmin();
       }
     }
 
     match /topics/{topicId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow create, update, delete: if isAdmin();
 
       match /lessons/{lessonId} {
         allow get, list: if isSignedIn();
-        allow create, update, delete: if false;
+        allow create, update, delete: if isAdmin();
       }
 
       match /questions/{questionId} {
         allow get, list: if isSignedIn();
-        allow create, update, delete: if false;
+        allow create, update, delete: if isAdmin();
 
         match /options/{optionId} {
           allow get, list: if isSignedIn();
-          allow create, update, delete: if false;
+          allow create, update, delete: if isAdmin();
         }
       }
     }
 
     match /mockTests/{mockTestId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow create, update, delete: if isAdmin();
     }
 
     match /studyResources/{studyResourceId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if false;
+      allow create, update, delete: if isAdmin();
     }
   }
 }

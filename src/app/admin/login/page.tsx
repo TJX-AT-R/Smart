@@ -14,6 +14,8 @@ import { ShieldAlert, Loader2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 
+const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
+
 export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
@@ -28,6 +30,11 @@ export default function AdminLoginPage() {
   useEffect(() => {
     async function checkAdmin() {
       if (user) {
+        if (user.email === SUPER_ADMIN_EMAIL) {
+          router.push("/admin/dashboard")
+          return
+        }
+        
         const userDoc = await getDoc(doc(db, "users", user.uid))
         if (userDoc.exists() && userDoc.data().isAdmin) {
           router.push("/admin/dashboard")
@@ -44,8 +51,19 @@ export default function AdminLoginPage() {
     setIsLoading(true)
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid))
+      const loggedInUser = userCredential.user
       
+      // Check if specifically the authorized super admin or has the isAdmin flag
+      if (loggedInUser.email === SUPER_ADMIN_EMAIL) {
+        toast({
+          title: "Super Admin Access Granted",
+          description: `Welcome, ${SUPER_ADMIN_EMAIL}`,
+        })
+        router.push("/admin/dashboard")
+        return
+      }
+
+      const userDoc = await getDoc(doc(db, "users", loggedInUser.uid))
       if (userDoc.exists() && userDoc.data().isAdmin) {
         toast({
           title: "Admin Access Granted",

@@ -12,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ChevronLeft, Loader2, Target, Trophy, Clock, Calendar } from "lucide-react"
 import { format } from "date-fns"
 
+const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
+
 export default function AdminUserProgressPage() {
   const { userId } = useParams()
   const { user, isUserLoading: isAuthLoading } = useUser()
@@ -22,6 +24,11 @@ export default function AdminUserProgressPage() {
   useEffect(() => {
     async function verifyAdmin() {
       if (user) {
+        if (user.email === SUPER_ADMIN_EMAIL) {
+          setIsAdmin(true)
+          return
+        }
+        
         const userDoc = await getDoc(doc(db, "users", user.uid))
         if (userDoc.exists() && userDoc.data().isAdmin) {
           setIsAdmin(true)
@@ -83,6 +90,7 @@ export default function AdminUserProgressPage() {
         <div className="flex items-center gap-4 mb-2">
           <h1 className="text-3xl font-bold text-white">{learner?.firstName} {learner?.lastName}</h1>
           <Badge variant="outline" className="border-secondary/30 text-secondary">Learner Profile</Badge>
+          {learner?.email === SUPER_ADMIN_EMAIL && <Badge variant="destructive">Super Admin</Badge>}
         </div>
         <p className="text-muted-foreground">{learner?.email}</p>
       </section>

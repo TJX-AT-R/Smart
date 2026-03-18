@@ -13,6 +13,8 @@ import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3 } from "luci
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 
+const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
+
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
@@ -23,6 +25,11 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function verifyAdmin() {
       if (user) {
+        if (user.email === SUPER_ADMIN_EMAIL) {
+          setIsAdmin(true)
+          return
+        }
+        
         const userDoc = await getDoc(doc(db, "users", user.uid))
         if (userDoc.exists() && userDoc.data().isAdmin) {
           setIsAdmin(true)
@@ -68,7 +75,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="px-4 py-1 border-destructive/30 text-destructive bg-destructive/5">
-            Admin Access Active
+            {user?.email === SUPER_ADMIN_EMAIL ? "Super Admin Access" : "Admin Access Active"}
           </Badge>
           <Button variant="outline" onClick={() => router.push("/")} size="sm">
             Exit to Site
@@ -152,7 +159,7 @@ export default function AdminDashboardPage() {
                   <TableRow key={learner.id} className="border-white/5 hover:bg-white/5 transition-colors">
                     <TableCell className="font-medium text-white">
                       {learner.firstName} {learner.lastName}
-                      {learner.isAdmin && (
+                      {(learner.isAdmin || learner.email === SUPER_ADMIN_EMAIL) && (
                         <Badge variant="destructive" className="ml-2 text-[10px] py-0">Admin</Badge>
                       )}
                     </TableCell>
