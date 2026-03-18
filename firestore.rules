@@ -20,11 +20,15 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the authenticated user has an admin role or is the designated super admin email. */
+    /** 
+     * @description Checks if the authenticated user is an admin.
+     * Checks email first for super-admin access to avoid 'get' failures if user doc doesn't exist.
+     */
     function isAdmin() {
       return isSignedIn() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
-        request.auth.token.email == 'ncubethubelihle483@gmail.com'
+        request.auth.token.email == 'ncubethubelihle483@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
       );
     }
 
@@ -82,7 +86,7 @@ service cloud.firestore {
     }
 
     // --- COLLECTION GROUP RULES ---
-    // These allow the Admin Dashboard to query across all users for activity monitoring
+    // These allow the Admin Dashboard to query across all users for monitoring
 
     match /{path=**}/purchases/{purchaseId} {
       allow read: if isAdmin();
@@ -96,7 +100,7 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // Nested resources in Topics (Legacy/Structured support)
+    // Nested resources in Topics (Structured support)
     match /topics/{topicId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
