@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3 } from "lucide-react"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, ClipboardList } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 
@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
             <ShieldAlert className="text-destructive" />
             Admin Dashboard
           </h1>
-          <p className="text-muted-foreground">Monitoring learner progress and performance across the platform.</p>
+          <p className="text-muted-foreground">Monitoring learner progress and managing platform content.</p>
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="px-4 py-1 border-destructive/30 text-destructive bg-destructive/5">
@@ -83,7 +83,7 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-primary/40 border-white/5 shadow-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -95,6 +95,23 @@ export default function AdminDashboardPage() {
             <div className="text-3xl font-bold text-white">{learners?.length || 0}</div>
           </CardContent>
         </Card>
+        
+        <Card className="bg-primary/40 border-white/5 shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Database size={16} className="text-secondary" />
+              Manage Content
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="secondary" size="sm" className="w-full text-xs" asChild>
+              <Link href="/admin/questions">
+                Question Bank <ArrowRight size={12} className="ml-1" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card className="bg-primary/40 border-white/5 shadow-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -107,16 +124,17 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-muted-foreground mt-1">Across all mock tests</p>
           </CardContent>
         </Card>
+
         <Card className="bg-primary/40 border-white/5 shadow-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users size={16} className="text-secondary" />
-              Active Today
+              <ClipboardList size={16} className="text-secondary" />
+              Active Tests
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">12</div>
-            <p className="text-xs text-muted-foreground mt-1">Learners studying now</p>
+            <div className="text-3xl font-bold text-white">1</div>
+            <p className="text-xs text-muted-foreground mt-1">Official mock test sequence</p>
           </CardContent>
         </Card>
       </div>

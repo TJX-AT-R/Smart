@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -8,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Timer, AlertCircle, CheckCircle2, Trophy, RotateCcw, ArrowRight, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, collection, setDoc, serverTimestamp } from "firebase/firestore"
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { doc, collection, setDoc, serverTimestamp, query, limit } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 import Image from "next/image"
@@ -22,7 +23,7 @@ export default function MockTestPage() {
   const passThresholdPercent = 92 // (23/25) * 100
   const initialTime = 20 * 60 // 20 minutes for 25 questions
 
-  const [testQuestions, setTestQuestions] = useState(MOCK_QUESTIONS.slice(0, totalQuestions))
+  const [testQuestions, setTestQuestions] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [userAnswers, setUserAnswers] = useState<(string | null)[]>(new Array(totalQuestions).fill(null))
   const [timeLeft, setTimeLeft] = useState(initialTime)
@@ -32,7 +33,15 @@ export default function MockTestPage() {
   const [startTime, setStartTime] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
-  const saveResults = useCallback((finalScore: number, answers: (string | null)[]) => {
+  // Fetch questions from Firestore
+  const questionsQuery = useMemoFirebase(() => {
+    if (!db) return null
+    return query(collection(db, "questions"), limit(100))
+  }, [db])
+
+  const { data: dbQuestions, isLoading: isDbLoading } = useCollection(questionsQuery)
+
+  const saveResults = useCallback((finalScore: number, answers: (string | null)[], questionsUsed: any[]) => {
     if (!user || !db || !startTime) return
 
     setIsSaving(true)
@@ -60,7 +69,7 @@ export default function MockTestPage() {
     })
 
     answers.forEach((answer, index) => {
-      const question = testQuestions[index]
+      const question = questionsUsed[index]
       if (!question) return
       
       const answerRef = doc(collection(db, "users", user.uid, "testAttempts", testAttemptRef.id, "userAnswers"))
@@ -84,10 +93,15 @@ export default function MockTestPage() {
     })
 
     setIsSaving(false)
-  }, [user, db, startTime, testQuestions, totalQuestions])
+  }, [user, db, startTime, totalQuestions])
 
   const startTest = () => {
-    const shuffled = [...MOCK_QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, totalQuestions)
+    // Use Firestore questions if available, fallback to mock
+    const sourceQuestions = (dbQuestions && dbQuestions.length >= totalQuestions) 
+      ? dbQuestions 
+      : MOCK_QUESTIONS
+      
+    const shuffled = [...sourceQuestions].sort(() => 0.5 - Math.random()).slice(0, totalQuestions)
     setTestQuestions(shuffled)
     setCurrentIndex(0)
     setUserAnswers(new Array(totalQuestions).fill(null))
@@ -109,7 +123,7 @@ export default function MockTestPage() {
       }
     })
     setScore(finalScore)
-    saveResults(finalScore, userAnswers)
+    saveResults(finalScore, userAnswers, testQuestions)
   }, [userAnswers, testQuestions, saveResults])
 
   useEffect(() => {
@@ -149,6 +163,14 @@ export default function MockTestPage() {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1)
     }
+  }
+
+  if (isDbLoading && !isTestActive) {
+    return (
+      <div className="flex h-[70vh] items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-secondary" />
+      </div>
+    )
   }
 
   if (!isTestActive && !isFinished) {
@@ -299,7 +321,7 @@ export default function MockTestPage() {
             )}
           </CardHeader>
           <CardContent className="p-8 pt-0 space-y-4">
-            {currentQuestion.options.map((option, idx) => {
+            {currentQuestion.options.map((option: string, idx: number) => {
               const label = String.fromCharCode(65 + idx) // A, B, C
               const isSelected = selectedOption === option
               
