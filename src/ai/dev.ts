@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/ai-powered-explanation-tool.ts';
+// AI flows can be registered here for the Genkit dev UI

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react"
@@ -7,7 +6,6 @@ import { MOCK_QUESTIONS } from "@/app/lib/data"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { AIExplanation } from "@/components/AIExplanation"
 import { CheckCircle2, XCircle, ArrowLeft, RotateCcw } from "lucide-react"
 
 export default function CategoryPracticePage() {
@@ -168,14 +166,6 @@ export default function CategoryPracticePage() {
               </button>
             )
           })}
-
-          {isAnswered && selectedOption !== currentQuestion.correctAnswer && (
-            <AIExplanation 
-              question={currentQuestion.text}
-              userAnswer={selectedOption!}
-              correctAnswer={currentQuestion.correctAnswer}
-            />
-          )}
         </CardContent>
         <CardFooter>
           {!isAnswered ? (

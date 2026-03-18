@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Sparkles, Menu, ArrowRight } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ArrowRight } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser } from "@/firebase"
@@ -83,15 +83,11 @@ export default function LandingPage() {
             <div className="grid gap-12 lg:grid-cols-2 items-center">
               <div className="flex flex-col justify-center space-y-10 animate-in slide-in-from-left duration-700 relative z-10">
                 <div className="space-y-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-sm font-semibold">
-                    <Sparkles size={14} />
-                    <span>AI-Powered Learning</span>
-                  </div>
                   <h1 className="text-5xl font-extrabold tracking-tighter sm:text-6xl xl:text-8xl/none text-white">
                     Pass Your Theory <span className="text-secondary">First Time</span>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl leading-relaxed">
-                    The ultimate driving theory coach with realistic mock tests and smart AI explanations for every mistake.
+                    The ultimate driving theory coach with realistic mock tests and structured modules for your success.
                   </p>
                 </div>
                 <div className="flex flex-col gap-4 min-[400px]:flex-row">
@@ -109,7 +105,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="text-secondary h-5 w-5" />
-                    <span>AI Tutor Included</span>
+                    <span>Realistic Simulations</span>
                   </div>
                 </div>
               </div>
@@ -142,9 +138,9 @@ export default function LandingPage() {
                 description="Comprehensive lessons structured to follow the official DVSA syllabus."
               />
               <FeatureCard 
-                icon={<Sparkles size={32} />}
-                title="AI Smart Tutor"
-                description="Get personalized explanations for every question you get wrong."
+                icon={<ShieldCheck size={32} />}
+                title="Secure Progress"
+                description="Your study history and scores are safely synced across all your devices."
                 highlight
               />
               <FeatureCard 

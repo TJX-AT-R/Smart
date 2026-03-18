@@ -100,7 +100,7 @@ export default function AuthPage() {
             DriveSmart Coach
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Master the road with AI-powered theory prep
+            Master the road with professional theory preparation
           </p>
         </div>
 
