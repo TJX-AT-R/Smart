@@ -20,7 +20,8 @@ import {
   XCircle, 
   AlertCircle,
   HelpCircle,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Database
 } from "lucide-react"
 import {
   Dialog,
@@ -46,11 +47,12 @@ export default function AdminQuestionsPage() {
   const [isAdding, setIsAdding] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [isSeeding, setIsSeeding] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // New Question Form State
   const [newQuestion, setNewQuestion] = useState({
     text: "",
-    category: "General",
+    category: "Road Signs",
     options: ["", "", ""],
     correctAnswer: "",
     imageUrl: ""
@@ -85,7 +87,7 @@ export default function AdminQuestionsPage() {
 
   const handleAddQuestion = async () => {
     if (!db || !newQuestion.text || !newQuestion.correctAnswer) {
-      toast({ variant: "destructive", title: "Missing fields", description: "Please fill in all required fields." })
+      toast({ variant: "destructive", title: "Validation Error", description: "Questions must have text and a correct answer." })
       return
     }
 
@@ -99,10 +101,11 @@ export default function AdminQuestionsPage() {
         updatedAt: serverTimestamp()
       })
 
-      toast({ title: "Question Added", description: "Successfully added to the bank." })
-      setNewQuestion({ text: "", category: "General", options: ["", "", ""], correctAnswer: "", imageUrl: "" })
+      toast({ title: "Bank Updated", description: "Scenario added to the theory repository." })
+      setNewQuestion({ text: "", category: "Road Signs", options: ["", "", ""], correctAnswer: "", imageUrl: "" })
+      setIsDialogOpen(false)
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message })
+      toast({ variant: "destructive", title: "Sync Error", description: error.message })
     } finally {
       setIsAdding(false)
     }
@@ -113,7 +116,7 @@ export default function AdminQuestionsPage() {
     setIsDeleting(id)
     try {
       await deleteDoc(doc(db, "questions", id))
-      toast({ title: "Question Deleted", description: "Successfully removed from the bank." })
+      toast({ title: "Scenario Terminated", description: "Successfully removed from the bank." })
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message })
     } finally {
@@ -133,7 +136,7 @@ export default function AdminQuestionsPage() {
           updatedAt: serverTimestamp()
         })
       }
-      toast({ title: "Seed Successful", description: "Initial question bank has been populated." })
+      toast({ title: "Seed Successful", description: "Master bank has been synchronized." })
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message })
     } finally {
@@ -150,164 +153,182 @@ export default function AdminQuestionsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")} className="gap-2">
-          <ChevronLeft size={16} /> Back to Dashboard
-        </Button>
-        <div className="flex gap-2">
+    <div className="p-4 sm:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
+      <header className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col items-center md:items-start">
+          <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")} className="gap-2 mb-4 hover:bg-white/5">
+            <ChevronLeft size={16} /> Back to Dashboard
+          </Button>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3 italic uppercase tracking-tighter">
+            <Database className="text-secondary size-8" />
+            Theory Repository
+          </h1>
+        </div>
+        
+        <div className="flex gap-3">
           {(!questions || questions.length === 0) && (
-            <Button variant="outline" size="sm" onClick={handleSeedQuestions} disabled={isSeeding}>
+            <Button variant="outline" size="sm" onClick={handleSeedQuestions} disabled={isSeeding} className="border-secondary/30 text-secondary h-10 px-6">
               {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertCircle className="mr-2 h-4 w-4" />}
-              Seed Initial Bank
+              Synchronize Master Bank
             </Button>
           )}
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-secondary text-white hover:bg-secondary/90">
-                <Plus size={16} className="mr-2" /> Add New Question
+              <Button className="bg-secondary text-white hover:bg-secondary/90 h-10 px-6 font-bold uppercase tracking-widest text-xs">
+                <Plus size={16} className="mr-2" /> Add Scenario
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-card border-white/5">
+            <DialogContent className="max-w-2xl bg-card border-white/5 shadow-2xl">
               <DialogHeader>
-                <DialogTitle>Create Theory Question</DialogTitle>
-                <DialogDescription>Add a new multiple-choice question to the theory test bank.</DialogDescription>
+                <DialogTitle className="italic uppercase tracking-tighter">Create Theory Scenario</DialogTitle>
+                <DialogDescription className="text-xs uppercase tracking-widest font-bold">Inject new content into the learner bank.</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-6 py-6">
                 <div className="space-y-2">
-                  <Label>Question Text</Label>
+                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Scenario Text</Label>
                   <Input 
-                    placeholder="e.g. What should you do when you see a stop sign?" 
+                    placeholder="e.g. What is the national speed limit on a single carriageway?" 
                     value={newQuestion.text}
                     onChange={(e) => setNewQuestion({...newQuestion, text: e.target.value})}
-                    className="bg-background/50 border-white/10"
+                    className="bg-background/50 border-white/10 h-12"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Input 
-                      placeholder="e.g. Road Signs" 
+                    <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Category</Label>
+                    <select 
                       value={newQuestion.category}
                       onChange={(e) => setNewQuestion({...newQuestion, category: e.target.value})}
-                      className="bg-background/50 border-white/10"
-                    />
+                      className="w-full bg-background/50 border border-white/10 h-12 rounded-lg px-3 text-sm focus:ring-1 focus:ring-secondary outline-none"
+                    >
+                      <option value="Road Signs">Road Signs</option>
+                      <option value="Rules of the Road">Rules of the Road</option>
+                      <option value="Safety">Safety</option>
+                      <option value="Hazard Perception">Hazard Perception</option>
+                      <option value="Motorway">Motorway</option>
+                    </select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Image URL (Optional)</Label>
+                    <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Diagram URL</Label>
                     <Input 
-                      placeholder="https://..." 
+                      placeholder="https://images.unsplash.com/..." 
                       value={newQuestion.imageUrl}
                       onChange={(e) => setNewQuestion({...newQuestion, imageUrl: e.target.value})}
-                      className="bg-background/50 border-white/10"
+                      className="bg-background/50 border-white/10 h-12"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Options</Label>
+                <div className="space-y-4">
+                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Answer Options</Label>
                   {newQuestion.options.map((opt, i) => (
                     <div key={i} className="flex gap-2">
                       <Input 
-                        placeholder={`Option ${i + 1}`} 
+                        placeholder={`Option ${labelMap(i)}`} 
                         value={opt}
                         onChange={(e) => {
                           const opts = [...newQuestion.options]
                           opts[i] = e.target.value
                           setNewQuestion({...newQuestion, options: opts})
                         }}
-                        className="bg-background/50 border-white/10"
+                        className="bg-background/50 border-white/10 h-12"
                       />
                       <Button 
                         size="sm" 
                         variant={newQuestion.correctAnswer === opt && opt !== "" ? "secondary" : "outline"}
-                        className="h-10 px-3 shrink-0"
+                        className="h-12 px-6 shrink-0 font-bold uppercase tracking-widest text-[10px]"
                         onClick={() => setNewQuestion({...newQuestion, correctAnswer: opt})}
                       >
-                        {newQuestion.correctAnswer === opt && opt !== "" ? <CheckCircle2 size={16} /> : "Correct"}
+                        {newQuestion.correctAnswer === opt && opt !== "" ? <CheckCircle2 size={16} /> : "Set Correct"}
                       </Button>
                     </div>
                   ))}
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-xs" 
+                    className="text-[10px] uppercase font-bold tracking-widest text-secondary hover:bg-secondary/10" 
                     onClick={() => setNewQuestion({...newQuestion, options: [...newQuestion.options, ""]})}
                   >
-                    + Add Option
+                    + Add New Option Slot
                   </Button>
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full bg-secondary text-white hover:bg-secondary/90" onClick={handleAddQuestion} disabled={isAdding}>
-                  {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Question"}
+                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={handleAddQuestion} disabled={isAdding}>
+                  {isAdding ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Save to Repository"}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </header>
 
-      <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
-        <CardHeader>
-          <CardTitle>Question Bank</CardTitle>
-          <CardDescription>Listing all active theory questions for the mock test.</CardDescription>
+      <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-2xl">
+        <CardHeader className="bg-primary/20 border-b border-white/5">
+          <CardTitle className="text-lg italic uppercase tracking-tighter">Bank Overview</CardTitle>
+          <CardDescription className="text-xs uppercase tracking-widest font-bold">Listing {questions?.length || 0} active scenarios in the SmartPass database.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-white/5 hover:bg-transparent">
-                <TableHead className="text-muted-foreground w-12"></TableHead>
-                <TableHead className="text-muted-foreground">Question</TableHead>
-                <TableHead className="text-muted-foreground">Category</TableHead>
-                <TableHead className="text-muted-foreground text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isQuestionsLoading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-secondary" />
-                  </TableCell>
+        <CardContent className="px-0 sm:px-6">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/5 hover:bg-transparent">
+                  <TableHead className="text-[10px] uppercase font-bold text-muted-foreground w-12 text-center">Type</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold text-muted-foreground">Scenario / ID</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold text-muted-foreground hidden md:table-cell">Category</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold text-muted-foreground text-right">Control</TableHead>
                 </TableRow>
-              ) : questions && questions.length > 0 ? (
-                questions.map((q) => (
-                  <TableRow key={q.id} className="border-white/5 hover:bg-white/5">
-                    <TableCell>
-                      {q.imageUrl ? <ImageIcon size={16} className="text-secondary" /> : <HelpCircle size={16} className="text-muted-foreground" />}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-white line-clamp-1">{q.text}</span>
-                        <span className="text-[10px] text-secondary font-mono">ID: {q.id}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="border-secondary/20 text-secondary text-[10px]">{q.category}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDeleteQuestion(q.id)}
-                        disabled={isDeleting === q.id}
-                      >
-                        {isDeleting === q.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {isQuestionsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-20">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-secondary" />
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
-                    No questions in the bank. Use "Seed Initial Bank" to start.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ) : questions && questions.length > 0 ? (
+                  questions.map((q) => (
+                    <TableRow key={q.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                      <TableCell className="text-center">
+                        {q.imageUrl ? <ImageIcon size={18} className="text-secondary mx-auto" /> : <HelpCircle size={18} className="text-muted-foreground mx-auto" />}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-white text-xs sm:text-sm line-clamp-1 italic">{q.text}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest mt-1">Ref: {q.id.substring(0, 8)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline" className="border-secondary/20 text-secondary text-[9px] uppercase font-bold tracking-widest">{q.category}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-destructive hover:bg-destructive/10 h-9 w-9"
+                          onClick={() => handleDeleteQuestion(q.id)}
+                          disabled={isDeleting === q.id}
+                        >
+                          {isDeleting === q.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-20 text-muted-foreground text-[10px] uppercase tracking-widest font-bold">
+                      Zero Scenarios Detected. <br /> Use "Synchronize Master Bank" to begin.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
   )
+}
+
+function labelMap(idx: number) {
+  return String.fromCharCode(65 + idx)
 }
