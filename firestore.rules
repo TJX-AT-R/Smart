@@ -3,10 +3,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * SMART PASS - ABSOLUTE ADMIN SECURITY RULES
-     */
-
+    // --- HELPER FUNCTIONS ---
+    
     function isSignedIn() {
       return request.auth != null;
     }
@@ -15,10 +13,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** 
-     * @description Robust admin check.
-     * Prioritizes the specific super-admin email for absolute access.
-     */
     function isAdmin() {
       return isSignedIn() && (
         request.auth.token.email == 'ncubethubelihle483@gmail.com' ||
@@ -27,100 +21,89 @@ service cloud.firestore {
       );
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    function isDataConsistent(userId) {
-      return request.resource.data.userId == userId;
-    }
-
     // --- COLLECTION RULES ---
 
+    // Global Content
     match /questions/{questionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
+    match /topics/{topicId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+      
+      match /lessons/{lessonId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+      
+      match /questions/{questionId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+        
+        match /options/{optionId} {
+          allow read: if isSignedIn();
+          allow write: if isAdmin();
+        }
+      }
+    }
+
+    match /mockTests/{testId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /studyResources/{resourceId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // User Data
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) || isAdmin();
-      allow delete: if isExistingOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
 
-      match /lessonProgress/{lessonProgressId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) && isDataConsistent(userId);
-        allow update: if (isExistingOwner(userId) && isDataConsistent(userId)) || isAdmin();
-        allow delete: if isExistingOwner(userId) || isAdmin();
+      match /lessonProgress/{progressId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
       }
 
-      match /testAttempts/{testAttemptId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) && isDataConsistent(userId);
-        allow update: if (isExistingOwner(userId) && isDataConsistent(userId)) || isAdmin();
-        allow delete: if isExistingOwner(userId) || isAdmin();
+      match /testAttempts/{attemptId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update, delete: if isAdmin();
 
-        match /userAnswers/{userAnswerId} {
-          allow get, list: if isOwner(userId) || isAdmin();
+        match /userAnswers/{answerId} {
+          allow read: if isOwner(userId) || isAdmin();
           allow create: if isOwner(userId);
-          allow update: if isExistingOwner(userId) || isAdmin();
-          allow delete: if isExistingOwner(userId) || isAdmin();
+          allow update, delete: if isAdmin();
         }
       }
 
       match /purchases/{purchaseId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) && isDataConsistent(userId);
-        allow update: if (isExistingOwner(userId) && isDataConsistent(userId)) || isAdmin();
-        allow delete: if isExistingOwner(userId) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update, delete: if isAdmin();
       }
     }
 
     // --- COLLECTION GROUP RULES ---
-    // Critical for Admin Dashboard to function across all users.
-
+    // Enable admin dashboard queries across all users
+    
     match /{path=**}/purchases/{purchaseId} {
-      allow list, get: if isAdmin();
+      allow list: if isAdmin();
     }
 
-    match /{path=**}/testAttempts/{testAttemptId} {
-      allow list, get: if isAdmin();
+    match /{path=**}/testAttempts/{attemptId} {
+      allow list: if isAdmin();
     }
 
     match /{path=**}/lessonProgress/{progressId} {
-      allow list, get: if isAdmin();
-    }
-
-    match /topics/{topicId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-
-      match /lessons/{lessonId} {
-        allow get, list: if isSignedIn();
-        allow create, update, delete: if isAdmin();
-      }
-
-      match /questions/{questionId} {
-        allow get, list: if isSignedIn();
-        allow create, update, delete: if isAdmin();
-
-        match /options/{optionId} {
-          allow get, list: if isSignedIn();
-          allow create, update, delete: if isAdmin();
-        }
-      }
-    }
-
-    match /mockTests/{mockTestId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /studyResources/{studyResourceId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow list: if isAdmin();
     }
   }
 }

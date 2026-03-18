@@ -5,427 +5,75 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user account in the DriveSmart Coach application, storing their profile information and linking to their study progress and test results.",
+      "description": "Represents a learner account in SmartPass.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address, used for login and communication.",
-          "format": "email"
-        },
-        "firstName": {
-          "type": "string",
-          "description": "The user's first name."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The user's last name."
-        },
-        "registrationDate": {
-          "type": "string",
-          "description": "The date and time when the user registered for the app.",
-          "format": "date-time"
-        },
-        "isAdmin": {
-          "type": "boolean",
-          "description": "Indicates if the user has administrative privileges to view all learners' progress."
-        }
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "registrationDate": { "type": "string", "format": "date-time" },
+        "lastLoginDate": { "type": "string", "format": "date-time" },
+        "isAdmin": { "type": "boolean" },
+        "createdAt": { "type": "object", "description": "Firestore ServerTimestamp" }
       },
-      "required": [
-        "id",
-        "email",
-        "firstName",
-        "lastName",
-        "registrationDate"
-      ]
-    },
-    "Topic": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Topic",
-      "type": "object",
-      "description": "Represents a category or subject area for driving theory lessons and questions, helping organize content.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Topic entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the topic, e.g., 'Road Signs', 'Hazard Perception'."
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of the topic's content."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description"
-      ]
-    },
-    "Lesson": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Lesson",
-      "type": "object",
-      "description": "Represents a structured lesson within a driving theory module, containing educational content.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Lesson entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the lesson."
-        },
-        "description": {
-          "type": "string",
-          "description": "A summary or overview of the lesson's content."
-        },
-        "contentMarkdown": {
-          "type": "string",
-          "description": "The full content of the lesson, formatted using Markdown for rich text display."
-        },
-        "topicId": {
-          "type": "string",
-          "description": "Reference to the Topic this lesson belongs to. (Relationship: Topic 1:N Lesson)"
-        },
-        "orderIndex": {
-          "type": "number",
-          "description": "The sequential order of this lesson within its topic, for structured progression."
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "description",
-        "contentMarkdown",
-        "topicId",
-        "orderIndex"
-      ]
+      "required": ["id", "email", "firstName", "lastName", "registrationDate"]
     },
     "Question": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Question",
       "type": "object",
-      "description": "Represents a multiple-choice practice question for driving theory, used in question banks and mock tests.",
+      "description": "A theory test scenario.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Question entity."
-        },
-        "text": {
-          "type": "string",
-          "description": "The text of the driving theory question."
-        },
-        "topicId": {
-          "type": "string",
-          "description": "Reference to the Topic this question belongs to. (Relationship: Topic 1:N Question)"
-        },
-        "correctOptionId": {
-          "type": "string",
-          "description": "Reference to the Option entity that represents the correct answer for this question. (Relationship: Question 1:1 Option)"
-        },
-        "explanation": {
-          "type": "string",
-          "description": "A detailed explanation for the question's answer, potentially used by the AI-powered explanation tool."
-        }
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "category": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correctAnswer": { "type": "string" },
+        "explanation": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "object" }
       },
-      "required": [
-        "id",
-        "text",
-        "topicId",
-        "correctOptionId",
-        "explanation"
-      ]
-    },
-    "Option": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Option",
-      "type": "object",
-      "description": "Represents a single answer choice for a multiple-choice question.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Option entity."
-        },
-        "questionId": {
-          "type": "string",
-          "description": "Reference to the Question this option belongs to. (Relationship: Question 1:N Option)"
-        },
-        "text": {
-          "type": "string",
-          "description": "The text content of the answer option."
-        }
-      },
-      "required": [
-        "id",
-        "questionId",
-        "text"
-      ]
-    },
-    "MockTest": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MockTest",
-      "type": "object",
-      "description": "Defines a simulated driving theory exam, including its structure, duration, and associated questions.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the MockTest entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the mock test, e.g., 'Official Mock Test 1'."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of the mock test, including topics covered or focus."
-        },
-        "durationMinutes": {
-          "type": "number",
-          "description": "The allowed duration for completing the mock test, in minutes."
-        },
-        "questionCount": {
-          "type": "number",
-          "description": "The total number of questions in this mock test."
-        },
-        "questionIds": {
-          "type": "array",
-          "description": "An ordered list of IDs for the Question entities included in this mock test. (Relationship: MockTest N:N Question)",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "durationMinutes",
-        "questionCount",
-        "questionIds"
-      ]
-    },
-    "TestAttempt": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "TestAttempt",
-      "type": "object",
-      "description": "Records a user's single attempt at either a mock test or a practice session, tracking their performance and completion status.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the TestAttempt entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who made this attempt. (Relationship: User 1:N TestAttempt)"
-        },
-        "mockTestId": {
-          "type": "string",
-          "description": "Optional reference to the MockTest if this attempt is for a specific mock test. Null if it's a general practice session. (Relationship: MockTest 1:N TestAttempt)"
-        },
-        "type": {
-          "type": "string",
-          "description": "The type of the test attempt, e.g., 'mock-test' or 'practice-session'."
-        },
-        "startTime": {
-          "type": "string",
-          "description": "The date and time when the user started the test attempt.",
-          "format": "date-time"
-        },
-        "endTime": {
-          "type": "string",
-          "description": "The date and time when the user completed or ended the test attempt.",
-          "format": "date-time"
-        },
-        "scorePercentage": {
-          "type": "number",
-          "description": "The user's score for this attempt, as a percentage (0-100)."
-        },
-        "isCompleted": {
-          "type": "boolean",
-          "description": "Indicates whether the user completed the test attempt."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "type",
-        "startTime",
-        "endTime",
-        "scorePercentage",
-        "isCompleted"
-      ]
-    },
-    "UserAnswer": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserAnswer",
-      "type": "object",
-      "description": "Stores a user's specific answer to a question within a particular test attempt.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the UserAnswer entity."
-        },
-        "testAttemptId": {
-          "type": "string",
-          "description": "Reference to the TestAttempt this answer belongs to. (Relationship: TestAttempt 1:N UserAnswer)"
-        },
-        "questionId": {
-          "type": "string",
-          "description": "Reference to the Question that was answered. (Relationship: Question 1:N UserAnswer)"
-        },
-        "selectedOptionId": {
-          "type": "string",
-          "description": "Reference to the Option selected by the user. (Relationship: Option 1:N UserAnswer)"
-        },
-        "isCorrect": {
-          "type": "boolean",
-          "description": "Indicates whether the user's selected answer was correct."
-        },
-        "submittedTime": {
-          "type": "string",
-          "description": "The date and time when the answer was submitted.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "testAttemptId",
-        "questionId",
-        "selectedOptionId",
-        "isCorrect",
-        "submittedTime"
-      ]
-    },
-    "LessonProgress": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "LessonProgress",
-      "type": "object",
-      "description": "Tracks a user's progress through a specific lesson, indicating completion status.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the LessonProgress entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User whose progress is being tracked. (Relationship: User 1:N LessonProgress)"
-        },
-        "lessonId": {
-          "type": "string",
-          "description": "Reference to the Lesson being tracked. (Relationship: Lesson 1:N LessonProgress)"
-        },
-        "isCompleted": {
-          "type": "boolean",
-          "description": "Indicates whether the user has completed this lesson."
-        },
-        "completionDate": {
-          "type": "string",
-          "description": "The date and time when the user completed the lesson, if applicable.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "lessonId",
-        "isCompleted"
-      ]
-    },
-    "StudyResource": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "StudyResource",
-      "type": "object",
-      "description": "Represents a downloadable study material available for purchase, such as PDFs or supplementary guides.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the StudyResource entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the study resource."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of the study resource's content."
-        },
-        "priceDollars": {
-          "type": "number",
-          "description": "The price of the study resource in US dollars."
-        },
-        "downloadUrl": {
-          "type": "string",
-          "description": "A URL pointing to the actual downloadable file for the study resource.",
-          "format": "uri"
-        },
-        "uploadDate": {
-          "type": "string",
-          "description": "The date and time when the study resource was uploaded.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "description",
-        "priceDollars",
-        "downloadUrl",
-        "uploadDate"
-      ]
+      "required": ["id", "text", "category", "options", "correctAnswer"]
     },
     "Purchase": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Purchase",
       "type": "object",
-      "description": "Records a transaction where a user purchases a study resource.",
+      "description": "An EcoCash transaction record.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Purchase entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who made the purchase. (Relationship: User 1:N Purchase)"
-        },
-        "studyResourceId": {
-          "type": "string",
-          "description": "Reference to the StudyResource that was purchased. (Relationship: StudyResource 1:N Purchase)"
-        },
-        "purchaseDate": {
-          "type": "string",
-          "description": "The date and time when the purchase was made.",
-          "format": "date-time"
-        },
-        "amountPaidDollars": {
-          "type": "number",
-          "description": "The amount paid for the resource in US dollars at the time of purchase."
-        },
-        "transactionId": {
-          "type": "string",
-          "description": "The unique transaction identifier provided by the payment gateway."
-        }
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "studyResourceId": { "type": "string" },
+        "purchaseDate": { "type": "string", "format": "date-time" },
+        "amountPaidDollars": { "type": "number" },
+        "transactionId": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "ecoCashNumber": { "type": "string" },
+        "recipientNumber": { "type": "string" },
+        "createdAt": { "type": "object" }
       },
-      "required": [
-        "id",
-        "userId",
-        "studyResourceId",
-        "purchaseDate",
-        "amountPaidDollars",
-        "transactionId"
-      ]
+      "required": ["id", "userId", "transactionId", "amountPaidDollars"]
+    },
+    "TestAttempt": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TestAttempt",
+      "type": "object",
+      "description": "A mock test or practice result.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "scorePercentage": { "type": "number" },
+        "isCompleted": { "type": "boolean" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["id", "userId", "scorePercentage"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
     "structure": [
@@ -433,212 +81,32 @@
         "path": "/users/{userId}",
         "definition": {
           "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile information. This is the root for all user-specific data and enables path-based ownership for subcollections.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching request.auth.uid."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/User" },
+          "description": "Root learner profiles."
         }
       },
       {
-        "path": "/users/{userId}/lessonProgress/{lessonProgressId}",
+        "path": "/questions/{questionId}",
         "definition": {
-          "entityName": "LessonProgress",
-          "schema": {
-            "$ref": "#/backend/entities/LessonProgress"
-          },
-          "description": "Tracks a user's progress for specific lessons. This collection is private to the user, with authorization handled by the 'userId' in the path.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching request.auth.uid."
-            },
-            {
-              "name": "lessonProgressId",
-              "description": "The unique ID of the lesson progress record."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/testAttempts/{testAttemptId}",
-        "definition": {
-          "entityName": "TestAttempt",
-          "schema": {
-            "$ref": "#/backend/entities/TestAttempt"
-          },
-          "description": "Records individual test attempts by a user. This collection is private to the user, with authorization handled by the 'userId' in the path. Includes denormalized 'userId' in path for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching request.auth.uid."
-            },
-            {
-              "name": "testAttemptId",
-              "description": "The unique ID of the test attempt."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/testAttempts/{testAttemptId}/userAnswers/{userAnswerId}",
-        "definition": {
-          "entityName": "UserAnswer",
-          "schema": {
-            "$ref": "#/backend/entities/UserAnswer"
-          },
-          "description": "Stores a user's specific answers within a test attempt. This subcollection is private to the user and their specific test attempt, with authorization handled by 'userId' and 'testAttemptId' in the path.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching request.auth.uid."
-            },
-            {
-              "name": "testAttemptId",
-              "description": "The unique ID of the parent test attempt."
-            },
-            {
-              "name": "userAnswerId",
-              "description": "The unique ID of the user's answer."
-            }
-          ]
+          "entityName": "Question",
+          "schema": { "$ref": "#/backend/entities/Question" },
+          "description": "Global theory repository."
         }
       },
       {
         "path": "/users/{userId}/purchases/{purchaseId}",
         "definition": {
           "entityName": "Purchase",
-          "schema": {
-            "$ref": "#/backend/entities/Purchase"
-          },
-          "description": "Records study resource purchases made by a user. This collection is private to the user, with authorization handled by the 'userId' in the path. Includes denormalized 'userId' in path for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching request.auth.uid."
-            },
-            {
-              "name": "purchaseId",
-              "description": "The unique ID of the purchase record."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/Purchase" },
+          "description": "Learner transaction history."
         }
       },
       {
-        "path": "/topics/{topicId}",
+        "path": "/users/{userId}/testAttempts/{attemptId}",
         "definition": {
-          "entityName": "Topic",
-          "schema": {
-            "$ref": "#/backend/entities/Topic"
-          },
-          "description": "Defines categories for driving theory content. These are globally readable by all authenticated users.",
-          "params": [
-            {
-              "name": "topicId",
-              "description": "The unique ID of the topic."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/topics/{topicId}/lessons/{lessonId}",
-        "definition": {
-          "entityName": "Lesson",
-          "schema": {
-            "$ref": "#/backend/entities/Lesson"
-          },
-          "description": "Contains structured lesson content, nested under its parent topic. These are globally readable by all authenticated users.",
-          "params": [
-            {
-              "name": "topicId",
-              "description": "The unique ID of the parent topic."
-            },
-            {
-              "name": "lessonId",
-              "description": "The unique ID of the lesson."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/topics/{topicId}/questions/{questionId}",
-        "definition": {
-          "entityName": "Question",
-          "schema": {
-            "$ref": "#/backend/entities/Question"
-          },
-          "description": "Stores practice questions, nested under their parent topic. These are globally readable by all authenticated users.",
-          "params": [
-            {
-              "name": "topicId",
-              "description": "The unique ID of the parent topic."
-            },
-            {
-              "name": "questionId",
-              "description": "The unique ID of the question."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/topics/{topicId}/questions/{questionId}/options/{optionId}",
-        "definition": {
-          "entityName": "Option",
-          "schema": {
-            "$ref": "#/backend/entities/Option"
-          },
-          "description": "Stores answer options for a specific question, nested under the question. These are globally readable by all authenticated users.",
-          "params": [
-            {
-              "name": "topicId",
-              "description": "The unique ID of the grandparent topic."
-            },
-            {
-              "name": "questionId",
-              "description": "The unique ID of the parent question."
-            },
-            {
-              "name": "optionId",
-              "description": "The unique ID of the answer option."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/mockTests/{mockTestId}",
-        "definition": {
-          "entityName": "MockTest",
-          "schema": {
-            "$ref": "#/backend/entities/MockTest"
-          },
-          "description": "Defines the structure and content of simulated mock tests. These are globally readable by all authenticated users.",
-          "params": [
-            {
-              "name": "mockTestId",
-              "description": "The unique ID of the mock test."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/studyResources/{studyResourceId}",
-        "definition": {
-          "entityName": "StudyResource",
-          "schema": {
-            "$ref": "#/backend/entities/StudyResource"
-          },
-          "description": "Lists downloadable study materials available for purchase. These are globally readable by all authenticated users to view details, but download access would be restricted by purchase status (checked via the 'purchases' collection).",
-          "params": [
-            {
-              "name": "studyResourceId",
-              "description": "The unique ID of the study resource."
-            }
-          ]
+          "entityName": "TestAttempt",
+          "schema": { "$ref": "#/backend/entities/TestAttempt" },
+          "description": "Mock test results."
         }
       }
     ]
