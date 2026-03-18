@@ -1,4 +1,3 @@
-
 "use client"
 
 import Link from "next/link"
@@ -28,7 +27,7 @@ export default function LandingPage() {
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white border border-white/10">
             <Car size={24} />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-white">DriveSmart</span>
+          <span className="text-2xl font-bold tracking-tight text-white uppercase italic">SmartPass</span>
         </Link>
         
         {/* Desktop Navigation */}
@@ -142,11 +141,11 @@ export default function LandingPage() {
             <div className="grid gap-12 lg:grid-cols-2 items-center">
               <div className="flex flex-col justify-center space-y-10 animate-in slide-in-from-left duration-700 relative z-10">
                 <div className="space-y-6">
-                  <h1 className="text-5xl font-extrabold tracking-tighter sm:text-6xl xl:text-8xl/none text-white">
-                    Pass Your Theory <span className="text-secondary">First Time</span>
+                  <h1 className="text-5xl font-extrabold tracking-tighter sm:text-6xl xl:text-8xl/none text-white uppercase italic">
+                    SmartPass <br /><span className="text-secondary font-normal not-italic">First Time Success</span>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl leading-relaxed">
-                    The ultimate driving theory coach with realistic mock tests and structured modules for your success.
+                    The futuristic driving theory coach with realistic mock tests and high-performance study modules.
                   </p>
                 </div>
                 <div className="flex flex-col gap-4 min-[400px]:flex-row">
@@ -164,7 +163,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="text-secondary h-5 w-5" />
-                    <span>Realistic Simulations</span>
+                    <span>Futuristic Simulations</span>
                   </div>
                 </div>
               </div>
@@ -172,7 +171,7 @@ export default function LandingPage() {
                 <div className="absolute -inset-20 bg-secondary/20 rounded-full blur-[120px] opacity-30" />
                 <div className="relative border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
                   <img
-                    alt="DriveSmart Dashboard Preview"
+                    alt="SmartPass Dashboard Preview"
                     className="w-full object-cover aspect-[4/3]"
                     src="https://picsum.photos/seed/theory-test/1000/750"
                     data-ai-hint="driving simulator dashboard"
@@ -187,8 +186,8 @@ export default function LandingPage() {
         <section id="features" className="w-full py-32 relative">
           <div className="container mx-auto px-6">
             <div className="text-center space-y-4 mb-20">
-              <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-white">Everything You Need</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Clean, efficient tools designed for one purpose: helping you pass.</p>
+              <h2 className="text-4xl font-bold tracking-tighter sm:text-5xl text-white">Advanced Learning</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Precision tools engineered to guarantee your driving theory success.</p>
             </div>
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               <FeatureCard 
@@ -218,9 +217,9 @@ export default function LandingPage() {
             <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-white border border-white/10">
               <Car size={18} />
             </div>
-            <span className="font-bold text-xl text-white">DriveSmart</span>
+            <span className="font-bold text-xl text-white uppercase italic">SmartPass</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2024 DriveSmart Coach. Built for future drivers.</p>
+          <p className="text-sm text-muted-foreground">© 2024 SmartPass Coach. Engineered for future drivers.</p>
           <div className="flex gap-8">
             <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/admin/login">Admin Login</Link>
             <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Privacy</Link>

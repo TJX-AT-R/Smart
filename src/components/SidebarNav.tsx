@@ -54,12 +54,12 @@ export function SidebarNav() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex items-center gap-2 px-4 py-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground border border-white/10">
           <Car size={24} />
         </div>
         <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-          <span className="text-lg font-bold leading-none text-primary">DriveSmart</span>
-          <span className="text-xs text-muted-foreground">Coach</span>
+          <span className="text-lg font-bold leading-none text-white uppercase italic tracking-wider">SmartPass</span>
+          <span className="text-xs text-secondary/70 uppercase font-bold tracking-widest mt-1">Platform</span>
         </div>
       </SidebarHeader>
       <SidebarSeparator />

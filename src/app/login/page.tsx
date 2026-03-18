@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
@@ -141,11 +140,11 @@ function AuthContent() {
               <Car size={32} />
             </div>
           </Link>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">
-            DriveSmart Coach
+          <h2 className="text-3xl font-extrabold text-white tracking-tight uppercase italic">
+            SmartPass
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Master the road with professional theory preparation
+            Precision preparation for the modern driver
           </p>
         </div>
 
