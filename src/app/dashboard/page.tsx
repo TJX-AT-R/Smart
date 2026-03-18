@@ -1,15 +1,35 @@
-
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, BookOpen, ClipboardCheck, Timer, Trophy } from "lucide-react"
+import { ArrowRight, BookOpen, ClipboardCheck, Timer, Trophy, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { MOCK_LESSONS } from "../lib/data"
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, query, orderBy, limit } from "firebase/firestore"
 
 export default function DashboardPage() {
+  const { user } = useUser()
+  const db = useFirestore()
+
   const overallProgress = Math.round(MOCK_LESSONS.reduce((acc, curr) => acc + curr.progress, 0) / MOCK_LESSONS.length);
+
+  // Fetch real mock test data
+  const testsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null
+    return query(
+      collection(db, "users", user.uid, "testAttempts"),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    )
+  }, [db, user])
+
+  const { data: tests, isLoading: isTestsLoading } = useCollection(testsQuery)
+
+  const avgMockScore = tests?.length 
+    ? Math.round(tests.reduce((acc, curr) => acc + curr.scorePercentage, 0) / tests.length) 
+    : 0
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -36,7 +56,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">12 / 24</div>
-            <p className="text-xs text-muted-foreground mt-1">+2 this week</p>
+            <p className="text-xs text-muted-foreground mt-1">Study goal: 100%</p>
           </CardContent>
         </Card>
         <Card className="shadow-md border-border">
@@ -45,18 +65,22 @@ export default function DashboardPage() {
             <ClipboardCheck className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">84%</div>
-            <p className="text-xs text-muted-foreground mt-1">Passing standard is 86%</p>
+            <div className="text-2xl font-bold">
+              {isTestsLoading ? <Loader2 className="h-5 w-5 animate-spin inline" /> : `${avgMockScore}%`}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {avgMockScore >= 86 ? "Meeting pass standard" : "Aim for 86%+"}
+            </p>
           </CardContent>
         </Card>
         <Card className="shadow-md border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Study Time</CardTitle>
+            <CardTitle className="text-sm font-medium">Study Sessions</CardTitle>
             <Timer className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">14.5 hrs</div>
-            <p className="text-xs text-muted-foreground mt-1">Goal: 20 hrs total</p>
+            <div className="text-2xl font-bold">{tests?.length || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Mock tests completed</p>
           </CardContent>
         </Card>
       </div>
@@ -75,8 +99,10 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground">{lesson.description}</p>
                   <Progress value={lesson.progress} className="h-1.5 w-32 mt-2" />
                 </div>
-                <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform">
-                  <ArrowRight className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform" asChild>
+                  <Link href={`/lessons/${lesson.id}`}>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
             ))}
@@ -94,8 +120,8 @@ export default function DashboardPage() {
           <CardContent className="flex flex-col gap-4">
             <div className="aspect-video bg-muted rounded-lg relative overflow-hidden flex items-center justify-center p-6 text-center border-dashed border-2">
               <div className="space-y-2">
-                <p className="text-sm font-medium">Daily Challenge</p>
-                <p className="text-xs text-muted-foreground">Answer 10 questions to maintain your streak!</p>
+                <p className="text-sm font-medium text-primary">Ready for a challenge?</p>
+                <p className="text-xs text-muted-foreground">Taking regular mock tests is the best way to ensure a first-time pass.</p>
               </div>
             </div>
             <Button variant="outline" className="w-full" asChild>

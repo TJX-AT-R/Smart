@@ -6,11 +6,17 @@ import { MOCK_QUESTIONS } from "@/app/lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Timer, AlertCircle, CheckCircle2, XCircle, Trophy, RotateCcw, ArrowRight } from "lucide-react"
+import { Timer, AlertCircle, CheckCircle2, Trophy, RotateCcw, ArrowRight, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { useUser, useFirestore } from "@/firebase"
+import { doc, collection, setDoc, serverTimestamp } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function MockTestPage() {
   const router = useRouter()
+  const { user } = useUser()
+  const db = useFirestore()
   const totalQuestions = 25
   const initialTime = 8 * 60 // 8 minutes in seconds
 
@@ -21,10 +27,64 @@ export default function MockTestPage() {
   const [isTestActive, setIsTestActive] = useState(false)
   const [isFinished, setIsFinished] = useState(false)
   const [score, setScore] = useState(0)
+  const [startTime, setStartTime] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
-  // Start the test
+  const saveResults = useCallback((finalScore: number, answers: (string | null)[]) => {
+    if (!user || !db || !startTime) return
+
+    setIsSaving(true)
+    const testAttemptRef = doc(collection(db, "users", user.uid, "testAttempts"))
+    const endTime = new Date().toISOString()
+    const percentage = Math.round((finalScore / totalQuestions) * 100)
+
+    const attemptData = {
+      id: testAttemptRef.id,
+      userId: user.uid,
+      type: "mock-test",
+      startTime: startTime,
+      endTime: endTime,
+      scorePercentage: percentage,
+      isCompleted: true,
+      createdAt: serverTimestamp()
+    }
+
+    // Save the main attempt document
+    setDoc(testAttemptRef, attemptData).catch((err) => {
+      errorEmitter.emit("permission-error", new FirestorePermissionError({
+        path: testAttemptRef.path,
+        operation: "create",
+        requestResourceData: attemptData
+      }))
+    })
+
+    // Save individual answers
+    answers.forEach((answer, index) => {
+      const question = testQuestions[index]
+      const answerRef = doc(collection(db, "users", user.uid, "testAttempts", testAttemptRef.id, "userAnswers"))
+      
+      const answerData = {
+        id: answerRef.id,
+        testAttemptId: testAttemptRef.id,
+        questionId: question.id,
+        selectedOptionId: answer || "unanswered",
+        isCorrect: answer === question.correctAnswer,
+        submittedTime: endTime
+      }
+
+      setDoc(answerRef, answerData).catch((err) => {
+        errorEmitter.emit("permission-error", new FirestorePermissionError({
+          path: answerRef.path,
+          operation: "create",
+          requestResourceData: answerData
+        }))
+      })
+    })
+
+    setIsSaving(false)
+  }, [user, db, startTime, testQuestions, totalQuestions])
+
   const startTest = () => {
-    // Shuffle or just pick 25
     const shuffled = [...MOCK_QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, totalQuestions)
     setTestQuestions(shuffled)
     setCurrentIndex(0)
@@ -33,14 +93,13 @@ export default function MockTestPage() {
     setIsTestActive(true)
     setIsFinished(false)
     setScore(0)
+    setStartTime(new Date().toISOString())
   }
 
-  // Finish test
   const finishTest = useCallback(() => {
     setIsTestActive(false)
     setIsFinished(true)
     
-    // Calculate score
     let finalScore = 0
     userAnswers.forEach((answer, index) => {
       if (answer === testQuestions[index].correctAnswer) {
@@ -48,9 +107,9 @@ export default function MockTestPage() {
       }
     })
     setScore(finalScore)
-  }, [userAnswers, testQuestions])
+    saveResults(finalScore, userAnswers)
+  }, [userAnswers, testQuestions, saveResults])
 
-  // Timer logic
   useEffect(() => {
     let timer: NodeJS.Timeout
     if (isTestActive && timeLeft > 0) {
@@ -63,7 +122,6 @@ export default function MockTestPage() {
     return () => clearInterval(timer)
   }, [isTestActive, timeLeft, finishTest])
 
-  // Formatting time
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -119,7 +177,7 @@ export default function MockTestPage() {
             </div>
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-0.5" size={16} />
-              <span>Results will be shown immediately after completion</span>
+              <span>Results will be saved to your profile automatically.</span>
             </div>
           </CardContent>
           <CardFooter>
@@ -175,6 +233,12 @@ export default function MockTestPage() {
                 <span>Time Taken:</span>
                 <span className="font-bold">{formatTime(initialTime - timeLeft)}</span>
               </div>
+              {isSaving && (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving results...
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
