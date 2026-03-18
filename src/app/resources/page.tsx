@@ -56,7 +56,9 @@ export default function ResourcesPage() {
   const { data: userPurchases } = useCollection(purchasesQuery)
 
   const hasAccess = (resourceId: string) => {
+    // If user has global premium status, grant access instantly
     if (userData?.isPremium) return true
+    // Otherwise check individual purchases
     return userPurchases?.some(p => p.studyResourceId === resourceId)
   }
 
@@ -121,7 +123,7 @@ export default function ResourcesPage() {
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
             <Badge className="bg-secondary text-white uppercase tracking-widest text-[10px] font-bold">SmartPass Exclusive</Badge>
             {userData?.isPremium && (
-              <Badge className="bg-amber-500 text-white uppercase tracking-widest text-[10px] font-bold flex items-center gap-1">
+              <Badge className="bg-amber-500 text-white uppercase tracking-widest text-[10px] font-bold flex items-center gap-1 shadow-lg shadow-amber-500/20">
                 <Crown size={10} /> Global Access Active
               </Badge>
             )}
