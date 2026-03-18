@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-driving",
+      "description": "A person learning to drive with a professional instructor",
+      "imageUrl": "https://picsum.photos/seed/drive1/1200/600",
+      "imageHint": "driving lesson"
+    },
+    {
+      "id": "road-signs",
+      "description": "A collection of British road signs",
+      "imageUrl": "https://picsum.photos/seed/signs/600/400",
+      "imageHint": "road signs"
+    },
+    {
+      "id": "hazard-perception",
+      "description": "A view from a car dashboard showing a busy street",
+      "imageUrl": "https://picsum.photos/seed/hazard/600/400",
+      "imageHint": "street view"
+    },
+    {
+      "id": "car-maintenance",
+      "description": "Checking engine oil and car safety",
+      "imageUrl": "https://picsum.photos/seed/maintenance/600/400",
+      "imageHint": "car engine"
+    },
+    {
+      "id": "motorway-driving",
+      "description": "Driving on a modern motorway at dusk",
+      "imageUrl": "https://picsum.photos/seed/motorway/600/400",
+      "imageHint": "highway driving"
+    }
+  ]
+}
