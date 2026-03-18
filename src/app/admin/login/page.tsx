@@ -148,7 +148,7 @@ export default function AdminLoginPage() {
           <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center text-destructive mx-auto mb-6 border border-destructive/20 shadow-xl">
             <ShieldAlert size={40} />
           </div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight uppercase italic">SmartPass Admin</h2>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight uppercase italic text-shadow-sm">SmartPass Admin</h2>
           <p className="mt-2 text-sm text-muted-foreground">Authorized Access Only</p>
         </div>
 
