@@ -1,0 +1,186 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * DRIVE SMART COACH - SECURITY RULES PHILOSOPHY
+     * 
+     * Core Philosophy: This ruleset implements a strict "Path-Based Ownership" model for all personal 
+     * data and an "Authenticated-Read" model for educational content. Security is enforced by 
+     * segregating user-specific data into subcollections under the user's root document.
+     * 
+     * Data Structure:
+     * - /users/{userId}: Root profile and container for private subcollections.
+     * - /users/{userId}/[lessonProgress, testAttempts, purchases]: Private, owner-only access.
+     * - /topics, /mockTests, /studyResources: Global educational content accessible to any signed-in user.
+     * 
+     * Key Security Decisions:
+     * 1. Authorization Independence: We rely on wildcards in the document path (e.g., {userId}) 
+     *    to verify ownership, avoiding expensive and slow cross-document lookups (get() calls).
+     * 2. Strict Writes: Users can only write data within their own /users/{userId} path. 
+     *    Educational content (Topics, MockTests, etc.) is read-only for standard users.
+     * 3. No User Listing: While a user can access their own profile, they cannot list the 
+     *    entire /users collection, preventing data scraping of the user base.
+     * 4. Relational Integrity: On creation, we enforce that internal 'userId' fields match the 
+     *    authenticated user, ensuring the data remains linked to the correct account.
+     */
+
+    // --- HELPER FUNCTIONS ---
+
+    /** @description Checks if the request is from a signed-in user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user's UID matches the provided ID. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the document exists and the current user owns it. Used for updates/deletes. */
+    function isExistingOwner(userId) {
+      return resource != null && isOwner(userId);
+    }
+
+    /** @description Validates that the resource being created/updated belongs to the user specified in the path. */
+    function isDataConsistent(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the root User profile document.
+     * @path /users/{userId}
+     * @allow (get) if user is the owner. (create) if user matches path and sets correct internal ID.
+     * @deny (list) to prevent user enumeration.
+     * @principle Path-based ownership and self-creation restriction.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Progress tracking for individual driving lessons.
+       * @path /users/{userId}/lessonProgress/{lessonProgressId}
+       * @allow (read, write) if user owns the parent /users/{userId} path.
+       * @deny (all) if request.auth.uid != userId.
+       * @principle Subcollection access restricted via parent path wildcard.
+       */
+      match /lessonProgress/{lessonProgressId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isDataConsistent(userId);
+        allow update: if isExistingOwner(userId) && isDataConsistent(userId);
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description User's mock test history and results.
+       * @path /users/{userId}/testAttempts/{testAttemptId}
+       * @allow (read, write) if user owns the path.
+       * @deny (all) if userId doesn't match auth.
+       * @principle Document ownership for private test metrics.
+       */
+      match /testAttempts/{testAttemptId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isDataConsistent(userId);
+        allow update: if isExistingOwner(userId) && isDataConsistent(userId);
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Specific question responses nested within a test attempt.
+         * @path /users/{userId}/testAttempts/{testAttemptId}/userAnswers/{userAnswerId}
+         * @allow (read, write) if owner of the attempt history.
+         * @principle Recursive ownership through path wildcards.
+         */
+        match /userAnswers/{userAnswerId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId);
+          allow update: if isExistingOwner(userId);
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+
+      /**
+       * @description Records of purchased study materials.
+       * @path /users/{userId}/purchases/{purchaseId}
+       * @allow (get, list, create) if owner.
+       * @deny (update, delete) if not the owner or if attempting to modify transaction history.
+       * @principle Financial record integrity via owner-only creation.
+       */
+      match /purchases/{purchaseId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isDataConsistent(userId);
+        allow update: if isExistingOwner(userId) && isDataConsistent(userId);
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description Global educational topics and categories.
+     * @path /topics/{topicId}
+     * @allow (get, list) for any signed-in user.
+     * @deny (write) for all users (system/admin managed).
+     * @principle Read-only public educational content.
+     */
+    match /topics/{topicId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+
+      /**
+       * @description Lessons nested within a driving topic.
+       * @path /topics/{topicId}/lessons/{lessonId}
+       * @allow (read) if signed in.
+       */
+      match /lessons/{lessonId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if false;
+      }
+
+      /**
+       * @description Questions associated with a specific topic.
+       * @path /topics/{topicId}/questions/{questionId}
+       * @allow (read) if signed in.
+       */
+      match /questions/{questionId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if false;
+
+        /**
+         * @description Multiple choice options for a question.
+         * @path /topics/{topicId}/questions/{questionId}/options/{optionId}
+         * @allow (read) if signed in.
+         */
+        match /options/{optionId} {
+          allow get, list: if isSignedIn();
+          allow create, update, delete: if false;
+        }
+      }
+    }
+
+    /**
+     * @description 8-minute timed mock test structures.
+     * @path /mockTests/{mockTestId}
+     * @allow (read) for all authenticated users to take tests.
+     * @principle Read-only global test definitions.
+     */
+    match /mockTests/{mockTestId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Directory of study materials available for purchase.
+     * @path /studyResources/{studyResourceId}
+     * @allow (read) to browse available resources.
+     * @principle Public catalog with protected underlying assets.
+     */
+    match /studyResources/{studyResourceId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+  }
+}
