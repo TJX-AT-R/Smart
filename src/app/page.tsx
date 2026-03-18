@@ -1,13 +1,16 @@
-
 "use client"
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Sparkles } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Sparkles, Menu } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useState } from "react"
 
 export default function LandingPage() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background/95">
       <header className="px-6 lg:px-12 h-20 flex items-center border-b sticky top-0 bg-background/80 backdrop-blur-md z-50">
         <Link className="flex items-center justify-center gap-2" href="/">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white">
@@ -15,7 +18,9 @@ export default function LandingPage() {
           </div>
           <span className="text-2xl font-bold tracking-tight text-primary">DriveSmart Coach</span>
         </Link>
-        <nav className="ml-auto flex gap-6 sm:gap-10">
+        
+        {/* Desktop Navigation */}
+        <nav className="ml-auto hidden md:flex gap-6 sm:gap-10">
           <Link className="text-sm font-medium hover:text-secondary transition-colors" href="#features">
             Features
           </Link>
@@ -23,7 +28,42 @@ export default function LandingPage() {
             Login
           </Link>
         </nav>
+
+        {/* Mobile Hamburger Menu */}
+        <div className="ml-auto md:hidden">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu size={24} />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="bg-background">
+              <nav className="flex flex-col gap-4 mt-8">
+                <Link 
+                  className="text-lg font-medium hover:text-secondary p-2 transition-colors" 
+                  href="#features"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Features
+                </Link>
+                <Link 
+                  className="text-lg font-medium hover:text-secondary p-2 transition-colors" 
+                  href="/dashboard"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Login
+                </Link>
+                <Button asChild className="mt-4 bg-primary text-primary-foreground">
+                  <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                    Get Started
+                  </Link>
+                </Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </header>
+
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 px-6 overflow-hidden">
           <div className="container mx-auto">

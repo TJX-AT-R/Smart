@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -12,7 +11,8 @@ import {
   Trophy,
   Settings,
   LogOut,
-  Car
+  Car,
+  Download
 } from "lucide-react"
 
 import {
@@ -31,6 +31,7 @@ const navItems = [
   { icon: BookOpen, label: "Theory Lessons", href: "/lessons" },
   { icon: Pencil, label: "Practice Bank", href: "/practice" },
   { icon: ClipboardCheck, label: "Mock Tests", href: "/mock-test" },
+  { icon: Download, label: "Study Resources", href: "/resources" },
   { icon: Trophy, label: "My Progress", href: "/progress" },
 ]
 
@@ -59,7 +60,7 @@ export function SidebarNav() {
                 tooltip={item.label}
               >
                 <Link href={item.href}>
-                  <item.icon />
+                  <item.icon className={pathname === item.href ? "text-secondary" : "text-primary/70"} />
                   <span>{item.label}</span>
                 </Link>
               </SidebarMenuButton>
