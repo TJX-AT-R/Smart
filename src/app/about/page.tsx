@@ -125,7 +125,7 @@ export default function AboutPage() {
             </div>
             <span className="font-bold text-xl text-white uppercase italic">SmartPass</span>
           </div>
-          <p className="text-xs text-muted-foreground">© 2024 SmartPass Coach. Engineered for future drivers.</p>
+          <p className="text-xs text-muted-foreground">© 2026 SmartPass Coach. Engineered for future drivers.</p>
           <div className="flex gap-6">
             <Link className="text-xs font-medium text-muted-foreground hover:text-secondary transition-colors" href="/">Home</Link>
             <Link className="text-xs font-medium text-muted-foreground hover:text-secondary transition-colors" href="/login">Login</Link>

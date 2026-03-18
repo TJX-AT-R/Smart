@@ -236,7 +236,7 @@ export default function LandingPage() {
             </div>
             <span className="font-bold text-xl text-white uppercase italic">SmartPass</span>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">© 2024 SmartPass Coach. Engineered for future drivers.</p>
+          <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">© 2026 SmartPass Coach. Engineered for future drivers.</p>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/about">About Us</Link>
             <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/admin/login">Admin Login</Link>
