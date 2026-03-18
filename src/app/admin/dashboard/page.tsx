@@ -9,8 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, ClipboardList, Wallet, Smartphone } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, Wallet, Smartphone, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 
@@ -60,7 +59,7 @@ export default function AdminDashboardPage() {
       collectionGroup(db, "purchases"),
       where("status", "==", "pending_verification"),
       orderBy("purchaseDate", "desc"),
-      limit(5)
+      limit(10)
     )
   }, [db, isAdmin])
 
@@ -87,7 +86,7 @@ export default function AdminDashboardPage() {
             <ShieldAlert className="text-destructive" />
             SmartPass Admin
           </h1>
-          <p className="text-muted-foreground">Absolute Control & Analytics Portal</p>
+          <p className="text-muted-foreground">Verification & Control Portal</p>
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="px-4 py-1 border-destructive/30 text-destructive bg-destructive/5">
@@ -121,7 +120,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-white">{pendingPayments?.length || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">Requires manual verification</p>
+            <p className="text-xs text-muted-foreground mt-1">Requires EcoCash verification</p>
           </CardContent>
         </Card>
 
@@ -129,13 +128,13 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Database size={16} className="text-secondary" />
-              Content Engine
+              Question Bank
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="secondary" size="sm" className="w-full text-xs" asChild>
               <Link href="/admin/questions">
-                Manage Question Bank <ArrowRight size={12} className="ml-1" />
+                Manage Bank <ArrowRight size={12} className="ml-1" />
               </Link>
             </Button>
           </CardContent>
@@ -145,12 +144,12 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <BarChart3 size={16} className="text-secondary" />
-              Performance index
+              Avg Performance
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-white">74%</div>
-            <p className="text-xs text-muted-foreground mt-1">Platform Average</p>
+            <p className="text-xs text-muted-foreground mt-1">Mock test pass rate</p>
           </CardContent>
         </Card>
       </div>
@@ -161,9 +160,9 @@ export default function AdminDashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Smartphone size={18} className="text-secondary" />
-                Recent Submissions
+                Awaiting Verification
               </CardTitle>
-              <CardDescription>Manual verification required.</CardDescription>
+              <CardDescription>Instant EcoCash reference check.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {isPaymentsLoading ? (
@@ -173,16 +172,16 @@ export default function AdminDashboardPage() {
               ) : pendingPayments && pendingPayments.length > 0 ? (
                 <div className="divide-y divide-white/5">
                   {pendingPayments.map((payment) => (
-                    <div key={payment.id} className="p-4 hover:bg-white/5 transition-colors">
+                    <div key={payment.id} className="p-4 hover:bg-white/5 transition-colors group">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-bold font-mono text-secondary">{payment.transactionId}</span>
                         <span className="text-[10px] text-muted-foreground">{format(new Date(payment.purchaseDate), "MMM d, HH:mm")}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-xs text-white truncate max-w-[120px]">Resource ID: {payment.studyResourceId}</span>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
+                        <span className="text-xs text-white truncate max-w-[120px]">User: {payment.userId.slice(0, 8)}...</span>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px] group-hover:bg-secondary group-hover:text-white" asChild>
                           <Link href={`/admin/users/${payment.userId}`}>
-                            Review <ArrowRight size={10} className="ml-1" />
+                            Verify Now <ArrowRight size={10} className="ml-1" />
                           </Link>
                         </Button>
                       </div>
@@ -191,7 +190,8 @@ export default function AdminDashboardPage() {
                 </div>
               ) : (
                 <div className="p-8 text-center text-sm text-muted-foreground">
-                  Queue is clear.
+                  <CheckCircle2 className="mx-auto mb-2 opacity-20" size={32} />
+                  All payments verified.
                 </div>
               )}
             </CardContent>
@@ -201,13 +201,13 @@ export default function AdminDashboardPage() {
         <Card className="lg:col-span-2 border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
           <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>Learner Analytics</CardTitle>
-              <CardDescription>High-level monitoring of platform users.</CardDescription>
+              <CardTitle>Learner Directory</CardTitle>
+              <CardDescription>Manage access and track progress.</CardDescription>
             </div>
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input 
-                placeholder="Find learner..." 
+                placeholder="Search learner..." 
                 className="w-full pl-10 h-10 bg-background/50 border border-white/10 rounded-md text-sm outline-none focus:ring-1 focus:ring-secondary/50"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -219,8 +219,8 @@ export default function AdminDashboardPage() {
               <TableHeader>
                 <TableRow className="border-white/5 hover:bg-transparent">
                   <TableHead className="text-muted-foreground">Learner</TableHead>
-                  <TableHead className="text-muted-foreground">Enrolled</TableHead>
-                  <TableHead className="text-muted-foreground text-right">Actions</TableHead>
+                  <TableHead className="text-muted-foreground">Joined</TableHead>
+                  <TableHead className="text-muted-foreground text-right">Profile</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -240,12 +240,12 @@ export default function AdminDashboardPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs">
-                        {new Date(learner.registrationDate).toLocaleDateString()}
+                        {format(new Date(learner.registrationDate), "MMM d, yyyy")}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" className="hover:bg-secondary/10 hover:text-secondary h-8" asChild>
                           <Link href={`/admin/users/${learner.id}`}>
-                            View Profile <ArrowRight className="ml-2 h-4 w-4" />
+                            View <ArrowRight className="ml-2 h-4 w-4" />
                           </Link>
                         </Button>
                       </TableCell>
