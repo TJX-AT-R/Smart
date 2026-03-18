@@ -16,6 +16,15 @@ export interface LessonModule {
   progress: number;
 }
 
+export interface StudyResource {
+  id: string;
+  title: string;
+  description: string;
+  priceDollars: number;
+  downloadUrl: string;
+  thumbnailUrl: string;
+}
+
 export interface UserProgress {
   userId: string;
   completedLessons: string[];
