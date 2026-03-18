@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { format } from "date-fns"
 
-const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
+const ENC_A = "bmN1YmV0aHViZWxpaGxlNDgzQGdtYWlsLmNvbQ==";
+const getAdminEmail = () => typeof window !== 'undefined' ? window.atob(ENC_A) : "";
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser()
@@ -26,7 +27,8 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function verifyAdmin() {
       if (user) {
-        if (user.email === SUPER_ADMIN_EMAIL) {
+        const adminEmail = getAdminEmail();
+        if (user.email === adminEmail) {
           setIsAdmin(true)
           return
         }
@@ -51,7 +53,6 @@ export default function AdminDashboardPage() {
 
   const { data: learners, isLoading: isUsersLoading } = useCollection(usersQuery)
 
-  // Pending payments query using collectionGroup
   const pendingPaymentsQuery = useMemoFirebase(() => {
     if (!db || isAdmin === null) return null
     return query(
@@ -83,13 +84,13 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <ShieldAlert className="text-destructive" />
-            Admin Dashboard
+            SmartPass Admin
           </h1>
-          <p className="text-muted-foreground">Monitoring learner progress and managing platform content.</p>
+          <p className="text-muted-foreground">Absolute Control & Analytics Portal</p>
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="px-4 py-1 border-destructive/30 text-destructive bg-destructive/5">
-            {user?.email === SUPER_ADMIN_EMAIL ? "Super Admin Access" : "Admin Access Active"}
+            {user?.email === getAdminEmail() ? "System Admin Active" : "Admin Access Active"}
           </Badge>
           <Button variant="outline" onClick={() => router.push("/")} size="sm">
             Exit to Site
@@ -127,13 +128,13 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Database size={16} className="text-secondary" />
-              Manage Content
+              Content Engine
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="secondary" size="sm" className="w-full text-xs" asChild>
               <Link href="/admin/questions">
-                Question Bank <ArrowRight size={12} className="ml-1" />
+                Manage Question Bank <ArrowRight size={12} className="ml-1" />
               </Link>
             </Button>
           </CardContent>
@@ -143,25 +144,24 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <BarChart3 size={16} className="text-secondary" />
-              Platform Avg.
+              Performance index
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-white">74%</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all mock tests</p>
+            <p className="text-xs text-muted-foreground mt-1">Platform Average</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Pending Payments Section */}
         <Card className="lg:col-span-1 border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden border-t-2 border-t-secondary">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Smartphone size={18} className="text-secondary" />
-              Pending Verifications
+              Recent Submissions
             </CardTitle>
-            <CardDescription>Recent EcoCash submissions.</CardDescription>
+            <CardDescription>Manual verification required.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {isPaymentsLoading ? (
@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
                       <span className="text-[10px] text-muted-foreground">{format(new Date(payment.purchaseDate), "MMM d, HH:mm")}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-white truncate max-w-[120px]">Resource: {payment.studyResourceId}</span>
+                      <span className="text-xs text-white truncate max-w-[120px]">Resource ID: {payment.studyResourceId}</span>
                       <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
                         <Link href={`/admin/users/${payment.userId}`}>
                           Review <ArrowRight size={10} className="ml-1" />
@@ -189,23 +189,22 @@ export default function AdminDashboardPage() {
               </div>
             ) : (
               <div className="p-8 text-center text-sm text-muted-foreground">
-                No pending payments.
+                Queue is clear.
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Learner Directory Section */}
         <Card className="lg:col-span-2 border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
           <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle>Learner Directory</CardTitle>
-              <CardDescription>View individual progress and test histories.</CardDescription>
+              <CardTitle>Learner Analytics</CardTitle>
+              <CardDescription>High-level monitoring of platform users.</CardDescription>
             </div>
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input 
-                placeholder="Search..." 
+                placeholder="Find learner..." 
                 className="w-full pl-10 h-10 bg-background/50 border border-white/10 rounded-md text-sm outline-none focus:ring-1 focus:ring-secondary/50"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -217,7 +216,7 @@ export default function AdminDashboardPage() {
               <TableHeader>
                 <TableRow className="border-white/5 hover:bg-transparent">
                   <TableHead className="text-muted-foreground">Learner</TableHead>
-                  <TableHead className="text-muted-foreground">Joined</TableHead>
+                  <TableHead className="text-muted-foreground">Enrolled</TableHead>
                   <TableHead className="text-muted-foreground text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -243,7 +242,7 @@ export default function AdminDashboardPage() {
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" className="hover:bg-secondary/10 hover:text-secondary h-8" asChild>
                           <Link href={`/admin/users/${learner.id}`}>
-                            View <ArrowRight className="ml-2 h-4 w-4" />
+                            View Profile <ArrowRight className="ml-2 h-4 w-4" />
                           </Link>
                         </Button>
                       </TableCell>
@@ -252,7 +251,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
-                      No learners found.
+                      No matching records.
                     </TableCell>
                   </TableRow>
                 )}

@@ -23,7 +23,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
+// Obfuscated Admin Email: ncubethubelihle483@gmail.com
+const ENC_A = "bmN1YmV0aHViZWxpaGxlNDgzQGdtYWlsLmNvbQ==";
+const getAdminEmail = () => typeof window !== 'undefined' ? window.atob(ENC_A) : "";
 
 export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -42,7 +44,8 @@ export default function AdminLoginPage() {
   useEffect(() => {
     async function checkAdmin() {
       if (user) {
-        if (user.email === SUPER_ADMIN_EMAIL) {
+        const adminEmail = getAdminEmail();
+        if (user.email === adminEmail) {
           router.push("/admin/dashboard")
           return
         }
@@ -64,11 +67,12 @@ export default function AdminLoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const loggedInUser = userCredential.user
+      const adminEmail = getAdminEmail();
       
-      if (loggedInUser.email === SUPER_ADMIN_EMAIL) {
+      if (loggedInUser.email === adminEmail) {
         toast({
-          title: "Super Admin Access Granted",
-          description: `Welcome, ${SUPER_ADMIN_EMAIL}`,
+          title: "Absolute Admin Access Granted",
+          description: `Welcome back, System Administrator.`,
         })
         router.push("/admin/dashboard")
         return
@@ -144,7 +148,7 @@ export default function AdminLoginPage() {
           <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center text-destructive mx-auto mb-6 border border-destructive/20 shadow-xl">
             <ShieldAlert size={40} />
           </div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Admin Portal</h2>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight uppercase italic">SmartPass Admin</h2>
           <p className="mt-2 text-sm text-muted-foreground">Authorized Access Only</p>
         </div>
 
@@ -160,7 +164,7 @@ export default function AdminLoginPage() {
                 <Input 
                   id="admin-email" 
                   type="email" 
-                  placeholder="admin@drivesmart.com" 
+                  placeholder="admin@smartpass.co.zw" 
                   required 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

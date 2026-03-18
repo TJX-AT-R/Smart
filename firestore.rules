@@ -4,13 +4,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * SMART PASS - SECURITY RULES
-     * 
-     * Core Philosophy: Path-Based Ownership for standard users, 
-     * and Role-Based Access for administrators.
+     * SMART PASS - ABSOLUTE ADMIN SECURITY RULES
      */
-
-    // --- HELPER FUNCTIONS ---
 
     function isSignedIn() {
       return request.auth != null;
@@ -21,8 +16,8 @@ service cloud.firestore {
     }
 
     /** 
-     * @description Checks if the authenticated user is an admin.
-     * Prioritizes the super-admin email check to avoid document lookup failures.
+     * @description Robust admin check.
+     * Prioritizes the specific super-admin email for absolute access.
      */
     function isAdmin() {
       return isSignedIn() && (
@@ -42,14 +37,12 @@ service cloud.firestore {
 
     // --- COLLECTION RULES ---
 
-    // Top-level questions bank
     match /questions/{questionId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
 
     match /users/{userId} {
-      // Admins can see all user lists/details. Owners can see their own.
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
@@ -86,8 +79,7 @@ service cloud.firestore {
     }
 
     // --- COLLECTION GROUP RULES ---
-    // These allow the Admin Dashboard to query across all users for monitoring.
-    // They must use the /{path=**} syntax to match nested collections globally.
+    // Critical for Admin Dashboard to function across all users.
 
     match /{path=**}/purchases/{purchaseId} {
       allow list, get: if isAdmin();
@@ -101,7 +93,6 @@ service cloud.firestore {
       allow list, get: if isAdmin();
     }
 
-    // Nested resources in Topics (Structured support)
     match /topics/{topicId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
