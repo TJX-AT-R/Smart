@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -27,6 +28,10 @@
           "type": "string",
           "description": "The date and time when the user registered for the app.",
           "format": "date-time"
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Indicates if the user has administrative privileges to view all learners' progress."
         }
       },
       "required": [
@@ -636,7 +641,6 @@
           ]
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable by strictly adhering to the core design principles.Authorization Independence is achieved primarily through structural segregation and path-based ownership. For all user-specific data (e.g., `TestAttempt`, `LessonProgress`, `Purchase`, `UserAnswer`), the `userId` is embedded directly in the document path (e.g., `/users/{userId}/testAttempts/{testAttemptId}`). This means that security rules can authorize access by simply comparing `request.auth.uid` to the `{userId}` wildcard in the path, without needing to perform `get()` operations on parent documents. This denormalization of the ownership context into the path eliminates hierarchical authorization dependencies, making rules atomic and easier to reason about.\n\nPublicly accessible content (like `Topic`, `Lesson`, `Question`, `Option`, `MockTest`, `StudyResource`) is placed in top-level collections. These collections will typically have rules that allow read access to any authenticated user (`request.auth.uid != null`). This approach maintains Authorization Independence as access to these documents does not depend on attributes of other documents.\n\nTo support Query-Able Paths (QAPs) and simplify security rules, Structural Segregation is heavily utilized. All documents within a given collection share a homogeneous security posture. For instance:\n1.  `/topics/{topicId}/lessons/{lessonId}`: All lessons are public and readable by any authenticated user. Listing all lessons for a topic is secure.\n2.  `/users/{userId}/testAttempts/{testAttemptId}`: All test attempts within a user's collection are private to that specific user. A user can securely list only their own test attempts (`/users/myUid/testAttempts`).\n\nThis segregation ensures that `list` operations are inherently secure because the security rules are applied at the collection level based on the path, not by filtering data post-query. The structure makes authorization intent explicit: top-level collections are generally public for reads (for authenticated users), while nested collections under `/users/{userId}` are strictly private to the authenticated user matching the `{userId}` wildcard. This design strategy drastically simplifies security rules, making them robust and easily debuggable."
+    ]
   }
 }
