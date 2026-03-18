@@ -8,7 +8,7 @@ import { MOCK_RESOURCES } from "../lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, ShoppingCart, CheckCircle, Loader2, FileText, Lock, Sparkles } from "lucide-react"
+import { Download, ShoppingCart, CheckCircle, Loader2, FileText, Lock, Sparkles, Smartphone, CreditCard, ArrowRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import {
@@ -18,13 +18,30 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import Autoplay from "embla-carousel-autoplay"
+
+const ECO_CASH_NUMBER = "0789269145"
 
 export default function ResourcesPage() {
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
+  
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
+  const [selectedResource, setSelectedResource] = useState<{id: string, title: string} | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'ecocash' | null>(null)
+  const [transactionRef, setTransactionRef] = useState("")
+  
   const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }))
 
   // Fetch user's purchases
@@ -39,41 +56,52 @@ export default function ResourcesPage() {
     return userPurchases?.some(p => p.studyResourceId === resourceId)
   }
 
-  const handlePurchase = async (resourceId: string, title: string) => {
-    if (!user) {
+  const handlePurchase = async () => {
+    if (!user || !selectedResource || !paymentMethod) return
+
+    if (paymentMethod === 'ecocash' && !transactionRef) {
       toast({
         variant: "destructive",
-        title: "Sign in required",
-        description: "Please log in to purchase study materials.",
+        title: "Reference Required",
+        description: "Please enter your EcoCash transaction reference.",
       })
       return
     }
 
-    setIsPurchasing(resourceId)
+    setIsPurchasing(selectedResource.id)
     
-    // Simulate payment delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
     try {
       const purchaseRef = doc(collection(db, "users", user.uid, "purchases"))
       await setDoc(purchaseRef, {
         id: purchaseRef.id,
         userId: user.uid,
-        studyResourceId: resourceId,
+        studyResourceId: selectedResource.id,
         purchaseDate: new Date().toISOString(),
         amountPaidDollars: 5,
-        transactionId: `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        paymentMethod: paymentMethod,
+        transactionId: paymentMethod === 'ecocash' ? transactionRef : `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        status: paymentMethod === 'ecocash' ? 'pending_verification' : 'completed',
         createdAt: serverTimestamp()
       })
 
       toast({
-        title: "Purchase Successful!",
-        description: `You have successfully purchased ${title}.`,
+        title: paymentMethod === 'ecocash' ? "Payment Submitted" : "Purchase Successful!",
+        description: paymentMethod === 'ecocash' 
+          ? "Your EcoCash payment is being verified. Access will be granted shortly."
+          : `You have successfully purchased ${selectedResource.title}.`,
       })
+      
+      // Close dialog
+      setSelectedResource(null)
+      setPaymentMethod(null)
+      setTransactionRef("")
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Purchase Failed",
+        title: "Transaction Failed",
         description: error.message || "Something went wrong during the transaction.",
       })
     } finally {
@@ -95,12 +123,12 @@ export default function ResourcesPage() {
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-4xl font-bold text-primary mb-4">Study Resources</h1>
           <p className="text-muted-foreground text-lg">
-            Unlock premium PDF booklets and master the road. Every resource is just <span className="text-secondary font-bold">$5</span>.
+            Unlock premium PDF booklets and master the road. Pay via Card or <span className="text-secondary font-bold font-mono">EcoCash</span>.
           </p>
         </div>
       </section>
 
-      {/* Animated Featured Slides */}
+      {/* Featured Resources */}
       <section className="space-y-6">
         <div className="flex items-center gap-2 px-2">
           <Sparkles className="text-secondary h-5 w-5" />
@@ -126,7 +154,7 @@ export default function ResourcesPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent" />
                       <div className="absolute bottom-4 left-4 right-4">
-                        <Badge className="bg-secondary text-secondary-foreground mb-2">Featured</Badge>
+                        <Badge className="bg-secondary text-secondary-foreground mb-2">Best Seller</Badge>
                         <h3 className="text-lg font-bold text-white line-clamp-1">{res.title}</h3>
                       </div>
                     </div>
@@ -142,12 +170,13 @@ export default function ResourcesPage() {
         </Carousel>
       </section>
 
+      {/* All Booklets Grid */}
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-white tracking-tight px-2">All Booklets</h2>
         <div className="grid gap-8 md:grid-cols-2">
           {MOCK_RESOURCES.map((res) => {
             const purchased = hasPurchased(res.id)
-            const purchasing = isPurchasing === res.id
+            const isSelected = selectedResource?.id === res.id
 
             return (
               <Card key={res.id} className="flex flex-col md:flex-row overflow-hidden border-white/5 bg-card/40 backdrop-blur-sm group hover:border-secondary/30 transition-all duration-300 shadow-xl">
@@ -193,16 +222,16 @@ export default function ResourcesPage() {
                       </div>
                     ) : (
                       <Button 
-                        onClick={() => handlePurchase(res.id, res.title)}
-                        disabled={purchasing || isPurchasesLoading}
+                        onClick={() => {
+                          if (!user) {
+                            toast({ variant: "destructive", title: "Sign in required", description: "Please log in to purchase materials." })
+                            return
+                          }
+                          setSelectedResource({ id: res.id, title: res.title })
+                        }}
                         className="w-full bg-primary text-white hover:bg-primary/90 h-11"
                       >
-                        {purchasing ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                        )}
-                        Unlock for $5.00
+                        <ShoppingCart className="mr-2 h-4 w-4" /> Unlock for $5.00
                       </Button>
                     )}
                   </div>
@@ -213,14 +242,95 @@ export default function ResourcesPage() {
         </div>
       </div>
 
+      {/* Payment Dialog */}
+      <Dialog open={!!selectedResource} onOpenChange={(open) => !open && setSelectedResource(null)}>
+        <DialogContent className="bg-card border-white/5 sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Complete Purchase</DialogTitle>
+            <DialogDescription>
+              Select your preferred payment method for <span className="text-white font-semibold">{selectedResource?.title}</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!paymentMethod ? (
+            <div className="grid grid-cols-1 gap-4 py-4">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2 border-white/10 hover:border-secondary/50 hover:bg-secondary/5"
+                onClick={() => setPaymentMethod('ecocash')}
+              >
+                <Smartphone className="text-secondary" />
+                <span>Pay via EcoCash</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2 border-white/10 hover:border-primary/50 hover:bg-primary/5"
+                onClick={() => setPaymentMethod('card')}
+              >
+                <CreditCard className="text-primary" />
+                <span>Pay via Card</span>
+              </Button>
+            </div>
+          ) : paymentMethod === 'ecocash' ? (
+            <div className="space-y-6 py-4">
+              <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20 space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-secondary">Instructions</p>
+                <p className="text-sm text-white">
+                  Send <span className="font-bold">$5.00</span> to the following EcoCash account:
+                </p>
+                <div className="flex items-center justify-between bg-background/50 p-3 rounded-lg border border-white/5">
+                  <span className="text-lg font-mono font-bold text-secondary">{ECO_CASH_NUMBER}</span>
+                  <Badge variant="secondary" className="text-[10px]">Merchant/Agent</Badge>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ref" className="text-xs">Transaction Reference (ID)</Label>
+                <Input 
+                  id="ref" 
+                  placeholder="Enter the EcoCash Ref code" 
+                  value={transactionRef}
+                  onChange={(e) => setTransactionRef(e.target.value)}
+                  className="bg-background/50 border-white/10"
+                />
+                <p className="text-[10px] text-muted-foreground">This is the unique code received in your confirmation SMS.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                <p className="text-sm text-center italic text-muted-foreground">Standard credit/debit card checkout simulation.</p>
+              </div>
+              <Button variant="outline" className="w-full" disabled>
+                Continue to Secure Processor
+              </Button>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="ghost" onClick={() => setPaymentMethod(null)} disabled={isPurchasing || !paymentMethod}>
+              Change Method
+            </Button>
+            <Button 
+              className="bg-secondary text-white hover:bg-secondary/90 min-w-[120px]" 
+              onClick={handlePurchase}
+              disabled={isPurchasing || !paymentMethod}
+            >
+              {isPurchasing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+              {paymentMethod === 'ecocash' ? 'Confirm Payment' : 'Complete Purchase'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card className="bg-muted/10 border-dashed border-2 border-white/10">
         <CardContent className="p-8 text-center space-y-4">
           <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto text-muted-foreground">
             <Lock size={24} />
           </div>
-          <h3 className="text-lg font-semibold text-primary">Secure Payments</h3>
+          <h3 className="text-lg font-semibold text-primary">Secure Multi-Channel Payments</h3>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            All transactions are processed through our secure gateway. Once purchased, your resources are permanently available in your account.
+            We support both EcoCash and standard Card payments. Your resources are permanently linked to your account once verified.
           </p>
         </CardContent>
       </Card>
