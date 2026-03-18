@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, Pencil } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser, useAuth } from "@/firebase"
@@ -33,6 +33,9 @@ export default function LandingPage() {
         <nav className="ml-auto hidden md:flex gap-6 lg:gap-10 items-center">
           <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#features">
             Features
+          </Link>
+          <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/practice">
+            Practice Bank
           </Link>
           <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/resources">
             Study Resources
@@ -80,6 +83,13 @@ export default function LandingPage() {
                   onClick={() => setIsOpen(false)}
                 >
                   Features
+                </Link>
+                <Link 
+                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
+                  href="/practice"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Practice Bank
                 </Link>
                 <Link 
                   className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
