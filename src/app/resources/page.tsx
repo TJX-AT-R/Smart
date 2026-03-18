@@ -71,6 +71,7 @@ export default function ResourcesPage() {
 
     setPayStep('processing')
     
+    // Simulate network delay for USSD push
     await new Promise(resolve => setTimeout(resolve, 4000))
 
     if (!db || !user || !selectedResource) return
