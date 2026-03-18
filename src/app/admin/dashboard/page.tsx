@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, ClipboardList, Wallet, Smartphone } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import Link from "link"
+import Link from "next/link"
 import { format } from "date-fns"
 
 // Obfuscated Admin Email: ncubethubelihle483@gmail.com
