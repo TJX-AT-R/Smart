@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, Wallet, Smartphone, History, ShieldCheck, CheckCircle2, XCircle } from "lucide-react"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, Database, Wallet, History, ShieldCheck, CheckCircle2, XCircle } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
@@ -190,7 +190,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base sm:text-lg italic uppercase tracking-tighter">EcoCash Activity</CardTitle>
-              <CardDescription className="text-[10px]">Verify incoming reference codes from {ADMIN_ECOCASH_NUMBER}.</CardDescription>
+              <CardDescription className="text-[10px]">Verify incoming reference codes from learners.</CardDescription>
             </div>
             <History size={16} className="text-muted-foreground" />
           </CardHeader>

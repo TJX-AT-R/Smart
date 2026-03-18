@@ -7,7 +7,7 @@ import { MOCK_RESOURCES } from "../lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, ShoppingCart, Sparkles, Smartphone, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck, Crown, Clock, Copy, AlertTriangle } from "lucide-react"
+import { Download, ShoppingCart, Sparkles, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck, Crown, Clock, Copy, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import {
@@ -87,7 +87,7 @@ export default function ResourcesPage() {
     if (!db || !user || !selectedResource) return
 
     try {
-      const purchaseId = `${user.uid}_${selectedResource.id}`
+      const purchaseId = `${user.uid}_${selectedResource.id}_${Date.now()}`
       const userPurchaseRef = doc(db, "users", user.uid, "purchases", purchaseId)
       const globalPurchaseRef = doc(db, "purchases", purchaseId)
       
@@ -106,7 +106,7 @@ export default function ResourcesPage() {
         createdAt: serverTimestamp()
       }
 
-      // Save to user sub-collection and root collection for admin
+      // Save to user sub-collection and root collection for admin visibility
       await setDoc(userPurchaseRef, purchaseData)
       await setDoc(globalPurchaseRef, purchaseData)
       
@@ -149,41 +149,6 @@ export default function ResourcesPage() {
             Unlock premium PDF study booklets via <span className="text-secondary font-bold">Manual EcoCash Transfer</span>. Submit your reference code for instant admin verification.
           </p>
         </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="text-secondary h-5 w-5" />
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight uppercase italic">Featured Modules</h2>
-          </div>
-        </div>
-        <Carousel
-          plugins={[plugin.current]}
-          className="w-full relative group"
-        >
-          <CarouselContent className="-ml-2 sm:-ml-4">
-            {MOCK_RESOURCES.map((res) => (
-              <CarouselItem key={`featured-${res.id}`} className="pl-2 sm:pl-4 basis-[85%] sm:basis-1/2 lg:basis-1/3">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-3xl border border-white/10 hover:border-secondary/50 transition-all duration-300 shadow-xl group/card">
-                  <Image 
-                    src={res.thumbnailUrl} 
-                    alt={res.title}
-                    fill
-                    className="object-cover group-hover/card:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-80" />
-                  <div className="absolute bottom-6 left-6 right-6 space-y-2">
-                    <h3 className="text-lg sm:text-xl font-bold text-white line-clamp-1 italic">{res.title}</h3>
-                    <Badge variant="secondary" className="bg-secondary/20 text-secondary border-none font-mono text-[10px] sm:text-xs">
-                      {hasAccess(res.id) ? "ACCESS GRANTED" : isPending(res.id) ? "VERIFICATION PENDING" : `$${res.priceDollars}.00`}
-                    </Badge>
-                  </div>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
       </section>
 
       <div className="space-y-6">
@@ -257,10 +222,10 @@ export default function ResourcesPage() {
         <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10 sm:max-w-md w-[95vw] rounded-3xl mx-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl italic uppercase tracking-tighter text-white">
-              <Wallet className="text-secondary" /> Manual EcoCash Verification
+              <Wallet className="text-secondary" /> Manual EcoCash Transfer
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Unlocking: <span className="text-secondary font-bold uppercase">{selectedResource?.title}</span>
+              Direct payment to Admin for: <span className="text-secondary font-bold uppercase">{selectedResource?.title}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -268,13 +233,13 @@ export default function ResourcesPage() {
             <div className="space-y-6 py-4">
               <div className="p-5 rounded-2xl bg-primary/40 border border-white/5 space-y-4 shadow-inner">
                 <div className="space-y-1">
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Step 1: Send Payment</p>
-                  <p className="text-sm text-white">Transfer <span className="text-secondary font-bold">${selectedResource?.priceDollars}.00</span> to the number below:</p>
+                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Step 1: Send Funds</p>
+                  <p className="text-sm text-white">Transfer <span className="text-secondary font-bold">${selectedResource?.priceDollars}.00</span> via EcoCash to:</p>
                 </div>
                 
                 <div className="flex items-center justify-between bg-background/60 p-3 rounded-xl border border-white/10">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold">EcoCash Merchant</span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Admin Number</span>
                     <span className="text-xl font-mono text-secondary tracking-tighter">{ADMIN_ECOCASH_NUMBER}</span>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => copyToClipboard(ADMIN_ECOCASH_NUMBER)} className="text-muted-foreground hover:text-white">
@@ -284,7 +249,7 @@ export default function ResourcesPage() {
 
                 <div className="flex gap-3 items-start p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                   <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={14} />
-                  <p className="text-[10px] text-amber-500 leading-tight">Ensure you keep your transaction SMS. You will need the reference code for verification.</p>
+                  <p className="text-[10px] text-amber-500 leading-tight">After sending, wait for the SMS confirmation. You will need to paste the Reference Code in the next step.</p>
                 </div>
               </div>
 
@@ -297,7 +262,7 @@ export default function ResourcesPage() {
           {payStep === 'submit' && (
             <div className="space-y-6 py-4">
               <div className="space-y-3">
-                <Label htmlFor="reference-code" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Paste EcoCash Reference Code</Label>
+                <Label htmlFor="reference-code" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">EcoCash Reference Code</Label>
                 <Input 
                   id="reference-code"
                   placeholder="e.g. EC240830.1234.H12345"
@@ -305,13 +270,13 @@ export default function ResourcesPage() {
                   onChange={(e) => setReferenceCode(e.target.value)}
                   className="bg-background/50 border-white/10 h-14 text-lg font-mono tracking-wider"
                 />
-                <p className="text-[9px] text-muted-foreground italic px-1">Verification usually takes 5-15 minutes during business hours.</p>
+                <p className="text-[9px] text-muted-foreground italic px-1">Admin will verify this code against their EcoCash statement.</p>
               </div>
 
               <div className="flex gap-3">
                 <Button variant="ghost" className="flex-1 h-12 text-xs font-bold uppercase tracking-widest" onClick={() => setPayStep('instructions')}>Back</Button>
                 <Button className="flex-[2] bg-secondary text-white hover:bg-secondary/90 h-12 text-xs font-bold shadow-xl shadow-secondary/20 uppercase tracking-widest" onClick={handleSubmitReference}>
-                  Submit for Review
+                  Submit for Verification
                 </Button>
               </div>
             </div>
@@ -324,8 +289,7 @@ export default function ResourcesPage() {
                 <ShieldCheck className="absolute inset-0 m-auto h-8 w-8 text-white animate-pulse" />
               </div>
               <div className="text-center space-y-2">
-                <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Encrypting Submission...</p>
-                <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">Securing your reference code in the SmartPass vault.</p>
+                <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Submitting Reference...</p>
               </div>
             </div>
           )}
@@ -336,11 +300,11 @@ export default function ResourcesPage() {
                 <Clock size={48} className="animate-pulse" />
               </div>
               <div className="text-center space-y-2">
-                <p className="font-bold text-white text-2xl italic uppercase tracking-tighter">Review Requested</p>
-                <p className="text-sm text-muted-foreground px-4">Your reference code has been sent to the command center. Once verified, the booklet will unlock automatically.</p>
+                <p className="font-bold text-white text-2xl italic uppercase tracking-tighter">Reference Submitted</p>
+                <p className="text-sm text-muted-foreground px-4">Admin will verify your payment shortly. Check back in 15 minutes.</p>
               </div>
               <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={() => setIsPaying(false)}>
-                Understood <CheckCircle2 className="ml-2 h-4 w-4" />
+                Return to Library <CheckCircle2 className="ml-2 h-4 w-4" />
               </Button>
             </div>
           )}
