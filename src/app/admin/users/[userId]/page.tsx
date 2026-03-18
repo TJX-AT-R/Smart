@@ -4,12 +4,12 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { collection, query, orderBy, doc, getDoc, limit, setDoc, serverTimestamp } from "firebase/firestore"
+import { collection, query, orderBy, doc, getDoc, limit, setDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ChevronLeft, Loader2, Target, Trophy, Clock, Calendar, ShieldCheck, Lock, Unlock, BookOpen, User as UserIcon } from "lucide-react"
+import { ChevronLeft, Loader2, Target, Trophy, Clock, ShieldCheck, Lock, Unlock, BookOpen, User as UserIcon, CheckCircle2, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { MOCK_RESOURCES, MOCK_LESSONS } from "@/app/lib/data"
 import { useToast } from "@/hooks/use-toast"
@@ -24,7 +24,7 @@ export default function AdminUserProgressPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
-  const [isGranting, setIsGranting] = useState<string | null>(null)
+  const [isVerifying, setIsVerifying] = useState<string | null>(null)
   const passThreshold = 92
 
   useEffect(() => {
@@ -79,14 +79,44 @@ export default function AdminUserProgressPage() {
 
   const { data: userPurchases, isLoading: isPurchasesLoading } = useCollection(purchasesQuery)
 
-  const hasAccess = (resourceId: string) => {
-    return userPurchases?.some(p => p.studyResourceId === resourceId)
+  const getPurchaseStatus = (resourceId: string) => {
+    const purchase = userPurchases?.find(p => p.studyResourceId === resourceId)
+    if (!purchase) return null
+    return purchase
   }
 
-  const handleGrantAccess = async (resourceId: string, title: string) => {
+  const handleVerifyPayment = async (purchaseId: string, resourceTitle: string) => {
     if (!db || !userId) return
     
-    setIsGranting(resourceId)
+    setIsVerifying(purchaseId)
+    try {
+      const purchaseRef = doc(db, "users", userId, "purchases", purchaseId)
+      await updateDoc(purchaseRef, {
+        status: 'verified',
+        verifiedBy: user?.email,
+        verifiedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+
+      toast({
+        title: "Payment Verified",
+        description: `Access to ${resourceTitle} has been granted.`,
+      })
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Verification failed",
+        description: error.message,
+      })
+    } finally {
+      setIsVerifying(null)
+    }
+  }
+
+  const handleGrantAccessManually = async (resourceId: string, title: string) => {
+    if (!db || !userId) return
+    
+    setIsVerifying(resourceId)
     try {
       const purchaseRef = doc(collection(db, "users", userId, "purchases"))
       await setDoc(purchaseRef, {
@@ -96,13 +126,15 @@ export default function AdminUserProgressPage() {
         purchaseDate: new Date().toISOString(),
         amountPaidDollars: 0,
         transactionId: `ADMIN-GRANT-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        status: 'verified',
         grantedBy: user?.email,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
 
       toast({
         title: "Access Granted",
-        description: `Successfully granted ${learner?.firstName} access to ${title}.`,
+        description: `Successfully granted manual access to ${title}.`,
       })
     } catch (error: any) {
       toast({
@@ -111,7 +143,7 @@ export default function AdminUserProgressPage() {
         description: error.message,
       })
     } finally {
-      setIsGranting(null)
+      setIsVerifying(null)
     }
   }
 
@@ -149,14 +181,8 @@ export default function AdminUserProgressPage() {
             <div className="flex items-center gap-4 mb-2">
               <h1 className="text-3xl font-bold text-white">{learner?.firstName} {learner?.lastName}</h1>
               <Badge variant="outline" className="border-secondary/30 text-secondary">Learner Profile</Badge>
-              {learner?.email === SUPER_ADMIN_EMAIL && <Badge variant="destructive">Super Admin</Badge>}
             </div>
             <p className="text-muted-foreground">{learner?.email}</p>
-            {learner?.lastLoginDate && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Last seen: {format(new Date(learner.lastLoginDate), "PPP p")}
-              </p>
-            )}
           </div>
         </div>
       </section>
@@ -164,8 +190,8 @@ export default function AdminUserProgressPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-primary text-primary-foreground border-none shadow-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Target size={16} className="text-secondary" />
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-secondary">
+              <Target size={16} />
               Avg. Score
             </CardTitle>
           </CardHeader>
@@ -177,22 +203,22 @@ export default function AdminUserProgressPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <BookOpen size={16} className="text-secondary" />
-              Lessons
+              Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.lessonsCompleted} / {MOCK_LESSONS.length}</div>
+            <div className="text-2xl font-bold text-white">{stats.lessonsCompleted} Modules</div>
           </CardContent>
         </Card>
         <Card className="bg-primary/40 border-white/5 shadow-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Clock size={16} className="text-secondary" />
-              Tests Taken
+              Mock Tests
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.totalTests}</div>
+            <div className="text-2xl font-bold text-white">{stats.totalTests} Attempts</div>
           </CardContent>
         </Card>
         <Card className="bg-primary/40 border-white/5 shadow-xl">
@@ -214,48 +240,66 @@ export default function AdminUserProgressPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShieldCheck className="text-secondary" size={20} />
-                Resource Access
+                Resource Access Management
               </CardTitle>
-              <CardDescription>Grant manual access to downloadable booklets.</CardDescription>
+              <CardDescription>Verify EcoCash references or grant manual access.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-muted-foreground">Resource Title</TableHead>
-                    <TableHead className="text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-muted-foreground">Resource</TableHead>
+                    <TableHead className="text-muted-foreground">Status / Ref</TableHead>
                     <TableHead className="text-muted-foreground text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {MOCK_RESOURCES.map((res) => {
-                    const access = hasAccess(res.id)
-                    const loading = isGranting === res.id
+                    const purchase = getPurchaseStatus(res.id)
+                    const loading = isVerifying === (purchase?.id || res.id)
+                    
                     return (
                       <TableRow key={res.id} className="border-white/5">
-                        <TableCell className="font-medium text-white">{res.title}</TableCell>
+                        <TableCell className="font-medium text-white text-xs">{res.title}</TableCell>
                         <TableCell>
-                          {access ? (
-                            <Badge className="bg-secondary/20 text-secondary border-secondary/30">
-                              <Unlock className="mr-1 h-3 w-3" /> Granted
-                            </Badge>
+                          {purchase ? (
+                            <div className="flex flex-col gap-1">
+                              <Badge 
+                                variant={purchase.status === 'verified' ? "secondary" : "outline"} 
+                                className={purchase.status === 'verified' ? "" : "border-yellow-500/50 text-yellow-500"}
+                              >
+                                {purchase.status === 'verified' ? <Unlock className="mr-1 h-3 w-3" /> : <AlertCircle className="mr-1 h-3 w-3" />}
+                                {purchase.status === 'verified' ? 'Verified' : 'Pending Verification'}
+                              </Badge>
+                              <span className="text-[10px] font-mono text-muted-foreground">{purchase.transactionId}</span>
+                            </div>
                           ) : (
-                            <Badge variant="outline" className="text-muted-foreground border-white/10">
-                              <Lock className="mr-1 h-3 w-3" /> No Access
-                            </Badge>
+                            <Badge variant="outline" className="opacity-40">No Purchase</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          {!access && (
+                          {purchase?.status === 'pending_verification' ? (
                             <Button 
                               size="sm" 
                               variant="secondary" 
-                              className="h-8 text-xs"
-                              disabled={loading || isPurchasesLoading}
-                              onClick={() => handleGrantAccess(res.id, res.title)}
+                              className="h-8 text-[10px]"
+                              disabled={loading}
+                              onClick={() => handleVerifyPayment(purchase.id, res.title)}
                             >
-                              {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Grant Access"}
+                              {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Verify & Grant"}
                             </Button>
+                          ) : !purchase ? (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-8 text-[10px] text-muted-foreground"
+                              disabled={loading}
+                              onClick={() => handleGrantAccessManually(res.id, res.title)}
+                            >
+                              {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Manual Grant"}
+                            </Button>
+                          ) : (
+                            <CheckCircle2 className="h-5 w-5 text-secondary ml-auto" />
                           )}
                         </TableCell>
                       </TableRow>
@@ -270,26 +314,18 @@ export default function AdminUserProgressPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="text-secondary" size={20} />
-                Lesson Progress
+                Module Completion
               </CardTitle>
-              <CardDescription>Tracking completed theory modules.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {MOCK_LESSONS.map((lesson) => {
                   const progress = lessonProgress?.find(p => p.lessonId === lesson.id)
                   return (
-                    <div key={lesson.id} className="flex items-center justify-between p-3 rounded-lg bg-background/30 border border-white/5">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-white">{lesson.title}</span>
-                        {progress?.completionDate && (
-                          <span className="text-[10px] text-muted-foreground">
-                            Done: {format(new Date(progress.completionDate), "MMM d, yyyy")}
-                          </span>
-                        )}
-                      </div>
-                      <Badge variant={progress?.isCompleted ? "secondary" : "outline"} className={progress?.isCompleted ? "" : "opacity-30"}>
-                        {progress?.isCompleted ? "Completed" : "Not Started"}
+                    <div key={lesson.id} className="flex items-center justify-between p-3 rounded-lg bg-background/20 border border-white/5">
+                      <span className="text-xs text-white">{lesson.title}</span>
+                      <Badge variant={progress?.isCompleted ? "secondary" : "outline"} className="text-[10px]">
+                        {progress?.isCompleted ? "Completed" : "In Progress"}
                       </Badge>
                     </div>
                   )
@@ -301,36 +337,34 @@ export default function AdminUserProgressPage() {
 
         <Card className="border-white/5 bg-card/40 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Attempt History</CardTitle>
-            <CardDescription>Visualizing performance for this learner.</CardDescription>
+            <CardTitle>Recent Mock Tests</CardTitle>
+            <CardDescription>Last 20 attempts by this learner.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="text-muted-foreground">Date</TableHead>
-                  <TableHead className="text-muted-foreground">Type</TableHead>
-                  <TableHead className="text-muted-foreground">Score</TableHead>
-                  <TableHead className="text-muted-foreground">Result</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Date</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Score</TableHead>
+                  <TableHead className="text-muted-foreground text-xs text-right">Result</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isTestsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-12">
+                    <TableCell colSpan={3} className="text-center py-12">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto text-secondary" />
                     </TableCell>
                   </TableRow>
                 ) : tests?.length ? (
                   tests.map((test) => (
-                    <TableRow key={test.id} className="border-white/5 hover:bg-white/5">
-                      <TableCell className="text-xs text-muted-foreground">
-                        {format(new Date(test.endTime), "MMM d, yyyy HH:mm")}
+                    <TableRow key={test.id} className="border-white/5">
+                      <TableCell className="text-[10px] text-muted-foreground">
+                        {format(new Date(test.endTime), "MMM d, HH:mm")}
                       </TableCell>
-                      <TableCell className="capitalize text-white">{test.type.replace("-", " ")}</TableCell>
-                      <TableCell className="font-bold text-white">{test.scorePercentage}%</TableCell>
-                      <TableCell>
-                        <Badge variant={test.scorePercentage >= passThreshold ? "secondary" : "destructive"} className="px-3">
+                      <TableCell className="font-bold text-white text-xs">{test.scorePercentage}%</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={test.scorePercentage >= passThreshold ? "secondary" : "destructive"} className="text-[10px] px-2 py-0">
                           {test.scorePercentage >= passThreshold ? "PASS" : "FAIL"}
                         </Badge>
                       </TableCell>
@@ -338,8 +372,8 @@ export default function AdminUserProgressPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
-                      This learner has not attempted any mock tests yet.
+                    <TableCell colSpan={3} className="text-center py-12 text-muted-foreground text-xs">
+                      No attempts yet.
                     </TableCell>
                   </TableRow>
                 )}
