@@ -72,15 +72,7 @@ export default function LandingPage() {
                 >
                   Study Resources
                 </Link>
-                {user ? (
-                  <Link 
-                    className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
-                    href="/dashboard"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                ) : (
+                {!user && (
                   <>
                     <Link 
                       className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
@@ -108,7 +100,7 @@ export default function LandingPage() {
                   </Link>
                 </div>
                 <Button asChild className="mt-4 bg-secondary text-secondary-foreground h-14 text-lg">
-                  <Link href="/login" onClick={() => setIsOpen(false)}>
+                  <Link href={user ? "/dashboard" : "/login"} onClick={() => setIsOpen(false)}>
                     {user ? "Go to Dashboard" : "Start Learning"}
                   </Link>
                 </Button>
