@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -8,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ChevronLeft, Loader2, Target, Trophy, Clock, Calendar, ShieldCheck, Lock, Unlock } from "lucide-react"
+import { ChevronLeft, Loader2, Target, Trophy, Clock, Calendar, ShieldCheck, Lock, Unlock, BookOpen, User as UserIcon } from "lucide-react"
 import { format } from "date-fns"
-import { MOCK_RESOURCES } from "@/app/lib/data"
+import { MOCK_RESOURCES, MOCK_LESSONS } from "@/app/lib/data"
 import { useToast } from "@/hooks/use-toast"
 
 const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
@@ -64,6 +65,13 @@ export default function AdminUserProgressPage() {
 
   const { data: tests, isLoading: isTestsLoading } = useCollection(testsQuery)
 
+  const lessonsQuery = useMemoFirebase(() => {
+    if (!db || !userId || isAdmin === null) return null
+    return collection(db, "users", userId, "lessonProgress")
+  }, [db, userId, isAdmin])
+
+  const { data: lessonProgress, isLoading: isLessonsLoading } = useCollection(lessonsQuery)
+
   const purchasesQuery = useMemoFirebase(() => {
     if (!db || !userId || isAdmin === null) return null
     return collection(db, "users", userId, "purchases")
@@ -115,9 +123,7 @@ export default function AdminUserProgressPage() {
     bestScore: tests?.length 
       ? Math.max(...tests.map(t => t.scorePercentage)) 
       : 0,
-    passRate: tests?.length
-      ? Math.round((tests.filter(t => t.scorePercentage >= passThreshold).length / tests.length) * 100)
-      : 0
+    lessonsCompleted: lessonProgress?.filter(p => p.isCompleted).length || 0
   }
 
   if (isAuthLoading || isAdmin === null || isUserLoading) {
@@ -135,13 +141,23 @@ export default function AdminUserProgressPage() {
       </Button>
 
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-4 mb-2">
-            <h1 className="text-3xl font-bold text-white">{learner?.firstName} {learner?.lastName}</h1>
-            <Badge variant="outline" className="border-secondary/30 text-secondary">Learner Profile</Badge>
-            {learner?.email === SUPER_ADMIN_EMAIL && <Badge variant="destructive">Super Admin</Badge>}
+        <div className="flex gap-6 items-center">
+          <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
+            <UserIcon size={40} />
           </div>
-          <p className="text-muted-foreground">{learner?.email}</p>
+          <div>
+            <div className="flex items-center gap-4 mb-2">
+              <h1 className="text-3xl font-bold text-white">{learner?.firstName} {learner?.lastName}</h1>
+              <Badge variant="outline" className="border-secondary/30 text-secondary">Learner Profile</Badge>
+              {learner?.email === SUPER_ADMIN_EMAIL && <Badge variant="destructive">Super Admin</Badge>}
+            </div>
+            <p className="text-muted-foreground">{learner?.email}</p>
+            {learner?.lastLoginDate && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Last seen: {format(new Date(learner.lastLoginDate), "PPP p")}
+              </p>
+            )}
+          </div>
         </div>
       </section>
 
@@ -160,12 +176,12 @@ export default function AdminUserProgressPage() {
         <Card className="bg-primary/40 border-white/5 shadow-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Trophy size={16} className="text-secondary" />
-              Best Score
+              <BookOpen size={16} className="text-secondary" />
+              Lessons
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.bestScore}%</div>
+            <div className="text-2xl font-bold text-white">{stats.lessonsCompleted} / {MOCK_LESSONS.length}</div>
           </CardContent>
         </Card>
         <Card className="bg-primary/40 border-white/5 shadow-xl">
@@ -182,72 +198,106 @@ export default function AdminUserProgressPage() {
         <Card className="bg-primary/40 border-white/5 shadow-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar size={16} className="text-secondary" />
-              Pass Rate
+              <Trophy size={16} className="text-secondary" />
+              Best Score
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.passRate}%</div>
+            <div className="text-2xl font-bold text-white">{stats.bestScore}%</div>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <Card className="border-white/5 bg-card/40 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="text-secondary" size={20} />
-              Resource Access Management
-            </CardTitle>
-            <CardDescription>Grant manual access to downloadable booklets.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="text-muted-foreground">Resource Title</TableHead>
-                  <TableHead className="text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-muted-foreground text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {MOCK_RESOURCES.map((res) => {
-                  const access = hasAccess(res.id)
-                  const loading = isGranting === res.id
+        <div className="space-y-8">
+          <Card className="border-white/5 bg-card/40 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="text-secondary" size={20} />
+                Resource Access
+              </CardTitle>
+              <CardDescription>Grant manual access to downloadable booklets.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-white/5 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Resource Title</TableHead>
+                    <TableHead className="text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-muted-foreground text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {MOCK_RESOURCES.map((res) => {
+                    const access = hasAccess(res.id)
+                    const loading = isGranting === res.id
+                    return (
+                      <TableRow key={res.id} className="border-white/5">
+                        <TableCell className="font-medium text-white">{res.title}</TableCell>
+                        <TableCell>
+                          {access ? (
+                            <Badge className="bg-secondary/20 text-secondary border-secondary/30">
+                              <Unlock className="mr-1 h-3 w-3" /> Granted
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground border-white/10">
+                              <Lock className="mr-1 h-3 w-3" /> No Access
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {!access && (
+                            <Button 
+                              size="sm" 
+                              variant="secondary" 
+                              className="h-8 text-xs"
+                              disabled={loading || isPurchasesLoading}
+                              onClick={() => handleGrantAccess(res.id, res.title)}
+                            >
+                              {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Grant Access"}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/5 bg-card/40 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="text-secondary" size={20} />
+                Lesson Progress
+              </CardTitle>
+              <CardDescription>Tracking completed theory modules.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {MOCK_LESSONS.map((lesson) => {
+                  const progress = lessonProgress?.find(p => p.lessonId === lesson.id)
                   return (
-                    <TableRow key={res.id} className="border-white/5">
-                      <TableCell className="font-medium text-white">{res.title}</TableCell>
-                      <TableCell>
-                        {access ? (
-                          <Badge className="bg-secondary/20 text-secondary border-secondary/30">
-                            <Unlock className="mr-1 h-3 w-3" /> Granted
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground border-white/10">
-                            <Lock className="mr-1 h-3 w-3" /> No Access
-                          </Badge>
+                    <div key={lesson.id} className="flex items-center justify-between p-3 rounded-lg bg-background/30 border border-white/5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-white">{lesson.title}</span>
+                        {progress?.completionDate && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Done: {format(new Date(progress.completionDate), "MMM d, yyyy")}
+                          </span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {!access && (
-                          <Button 
-                            size="sm" 
-                            variant="secondary" 
-                            className="h-8 text-xs"
-                            disabled={loading || isPurchasesLoading}
-                            onClick={() => handleGrantAccess(res.id, res.title)}
-                          >
-                            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Grant Access"}
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                      <Badge variant={progress?.isCompleted ? "secondary" : "outline"} className={progress?.isCompleted ? "" : "opacity-30"}>
+                        {progress?.isCompleted ? "Completed" : "Not Started"}
+                      </Badge>
+                    </div>
                   )
                 })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="border-white/5 bg-card/40 backdrop-blur-sm">
           <CardHeader>

@@ -1,10 +1,11 @@
+
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth, useFirestore, useUser } from "@/firebase"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,7 +41,12 @@ function AuthContent() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      // Update last login date
+      await updateDoc(doc(db, "users", userCredential.user.uid), {
+        lastLoginDate: new Date().toISOString(),
+        updatedAt: serverTimestamp()
+      })
       router.push("/dashboard")
     } catch (error: any) {
       toast({
@@ -67,6 +73,8 @@ function AuthContent() {
         firstName: firstName,
         lastName: lastName,
         registrationDate: new Date().toISOString(),
+        lastLoginDate: new Date().toISOString(),
+        isAdmin: false,
         createdAt: serverTimestamp(),
       })
 
