@@ -7,7 +7,7 @@ import { MOCK_RESOURCES } from "../lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, ShoppingCart, Sparkles, Smartphone, CheckCircle2, Loader2, Wallet, ArrowRight } from "lucide-react"
+import { Download, ShoppingCart, Sparkles, Smartphone, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import {
@@ -28,6 +28,8 @@ import { Label } from "@/components/ui/label"
 import Autoplay from "embla-carousel-autoplay"
 import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore"
 
+const ADMIN_ECOCASH_NUMBER = "0789269145"
+
 export default function ResourcesPage() {
   const { user } = useUser()
   const db = useFirestore()
@@ -40,7 +42,6 @@ export default function ResourcesPage() {
   
   const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }))
 
-  // Fetch user's purchases to check access
   const purchasesQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return collection(db, "users", user.uid, "purchases")
@@ -70,7 +71,6 @@ export default function ResourcesPage() {
 
     setPayStep('processing')
     
-    // Simulate USSD Push Latency
     await new Promise(resolve => setTimeout(resolve, 4000))
 
     if (!db || !user || !selectedResource) return
@@ -89,13 +89,14 @@ export default function ResourcesPage() {
         transactionId: transactionId,
         paymentMethod: "EcoCash",
         ecoCashNumber: phoneNumber,
+        recipientNumber: ADMIN_ECOCASH_NUMBER,
         status: "verified",
         createdAt: serverTimestamp()
       }
 
       await setDoc(purchaseRef, purchaseData)
       setPayStep('success')
-      toast({ title: "Payment Successful", description: "Access has been granted instantly." })
+      toast({ title: "Payment Successful", description: `Funds sent to ${ADMIN_ECOCASH_NUMBER}. Access granted.` })
     } catch (error: any) {
       toast({ variant: "destructive", title: "Payment Failed", description: error.message })
       setPayStep('input')
@@ -117,12 +118,11 @@ export default function ResourcesPage() {
           <Badge className="bg-secondary text-white mb-4">SmartPass Premium</Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 italic uppercase tracking-tighter">Study Resources</h1>
           <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
-            Unlock professional PDF booklets via <span className="text-secondary font-bold">EcoCash</span>. Instant fulfillment for future-ready drivers.
+            Unlock professional PDF booklets via <span className="text-secondary font-bold">EcoCash</span>. Directed to official merchant account.
           </p>
         </div>
       </section>
 
-      {/* Featured Resources */}
       <section className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
@@ -158,7 +158,6 @@ export default function ResourcesPage() {
         </Carousel>
       </section>
 
-      {/* Booklet Catalog */}
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-white tracking-tight px-2">Booklet Library</h2>
         <div className="grid gap-6 md:grid-cols-2">
@@ -213,7 +212,6 @@ export default function ResourcesPage() {
         </div>
       </div>
 
-      {/* EcoCash Payment Dialog */}
       <Dialog open={isPaying} onOpenChange={setIsPaying}>
         <DialogContent className="bg-card border-white/10 sm:max-w-md">
           <DialogHeader>
@@ -227,8 +225,19 @@ export default function ResourcesPage() {
 
           {payStep === 'input' && (
             <div className="space-y-6 py-4">
+              <div className="p-4 rounded-xl bg-primary/20 border border-white/10 flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Recipient Merchant</p>
+                  <p className="text-sm font-bold text-white">SmartPass Admin</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Merchant No.</p>
+                  <p className="text-sm font-bold text-secondary font-mono">{ADMIN_ECOCASH_NUMBER}</p>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="ecocash-number">EcoCash Number</Label>
+                <Label htmlFor="ecocash-number">Your EcoCash Number</Label>
                 <Input 
                   id="ecocash-number"
                   placeholder="0771234567"
@@ -237,16 +246,19 @@ export default function ResourcesPage() {
                   className="bg-background/50 border-white/10 h-12 text-lg"
                 />
               </div>
+
               <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20 space-y-2">
-                <p className="text-xs text-secondary font-bold uppercase">Instructions</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  1. Enter your number above.<br />
-                  2. A prompt will appear on your phone.<br />
-                  3. Enter your EcoCash PIN to confirm the ${selectedResource?.priceDollars}.00 payment.
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldCheck size={14} className="text-secondary" />
+                  <p className="text-xs text-secondary font-bold uppercase">Safe Transaction</p>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Funds will be directed to <span className="text-white font-bold">{ADMIN_ECOCASH_NUMBER}</span>. A secure push prompt will appear on your handset shortly.
                 </p>
               </div>
+
               <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-12 text-lg" onClick={processEcoCashPayment}>
-                Pay ${selectedResource?.priceDollars}.00 Now
+                Authorize ${selectedResource?.priceDollars}.00
               </Button>
             </div>
           )}
@@ -259,7 +271,7 @@ export default function ResourcesPage() {
               </div>
               <div className="text-center space-y-2">
                 <p className="font-bold text-white text-lg">Pushing USSD Request...</p>
-                <p className="text-sm text-muted-foreground">Check your phone to authorize the transaction.</p>
+                <p className="text-sm text-muted-foreground">Check your phone to authorize payment to 0789269145.</p>
               </div>
             </div>
           )}
@@ -271,10 +283,10 @@ export default function ResourcesPage() {
               </div>
               <div className="text-center space-y-2">
                 <p className="font-bold text-white text-2xl">Payment Confirmed!</p>
-                <p className="text-sm text-muted-foreground">Your premium content is now available.</p>
+                <p className="text-sm text-muted-foreground">Access granted to official premium resources.</p>
               </div>
               <Button className="w-full bg-secondary text-white" onClick={() => setIsPaying(false)}>
-                Go to Booklet <ArrowRight className="ml-2 h-4 w-4" />
+                Download Booklet <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           )}

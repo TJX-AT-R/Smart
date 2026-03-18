@@ -9,13 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, Wallet, Smartphone, History } from "lucide-react"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, Wallet, Smartphone, History, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 
 // Obfuscated Admin Email: ncubethubelihle483@gmail.com
 const ENC_A = "bmN1YmV0aHViZWxpaGxlNDgzQGdtYWlsLmNvbQ==";
 const getAdminEmail = () => typeof window !== 'undefined' ? window.atob(ENC_A) : "";
+const ADMIN_ECOCASH_NUMBER = "0789269145";
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser()
@@ -53,7 +54,6 @@ export default function AdminDashboardPage() {
 
   const { data: learners, isLoading: isUsersLoading } = useCollection(usersQuery)
 
-  // Use collectionGroup for all transactions
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || isAdmin === null) return null
     return query(collection(db, "purchases"), orderBy("createdAt", "desc"), limit(10))
@@ -87,6 +87,11 @@ export default function AdminDashboardPage() {
           <p className="text-muted-foreground font-mono text-xs uppercase tracking-widest">Administrator Oversight Portal</p>
         </div>
         <div className="flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-2 bg-secondary/5 px-4 py-1.5 rounded-full border border-secondary/20">
+            <ShieldCheck size={14} className="text-secondary" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Active Payout:</span>
+            <span className="text-[11px] font-mono font-bold text-secondary">{ADMIN_ECOCASH_NUMBER}</span>
+          </div>
           <Badge variant="outline" className="px-4 py-1 border-destructive/30 text-destructive bg-destructive/5 font-mono">
             {user?.email === getAdminEmail() ? "ROOT ACCESS ACTIVE" : "ADMIN ROLE ACTIVE"}
           </Badge>
@@ -155,7 +160,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Recent EcoCash Transactions</CardTitle>
-              <CardDescription className="text-xs">Live payment activity across the platform.</CardDescription>
+              <CardDescription className="text-xs">Incoming funds directed to {ADMIN_ECOCASH_NUMBER}.</CardDescription>
             </div>
             <History size={16} className="text-muted-foreground" />
           </CardHeader>
