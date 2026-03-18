@@ -181,7 +181,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="text-secondary h-4 w-4 sm:h-5 sm:w-5" />
-                    <span>Futuristic Simulations</span>
+                    <span>professionally prepared tests</span>
                   </div>
                 </div>
               </div>
