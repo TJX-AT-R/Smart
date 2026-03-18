@@ -4,7 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * DRIVE SMART COACH - SECURITY RULES
+     * SMART PASS - SECURITY RULES
      * 
      * Core Philosophy: Path-Based Ownership for standard users, 
      * and Role-Based Access for administrators.
@@ -37,6 +37,12 @@ service cloud.firestore {
     }
 
     // --- COLLECTION RULES ---
+
+    // Top-level questions bank
+    match /questions/{questionId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
 
     match /users/{userId} {
       // Admins can see all user lists/details. Owners can see their own.
@@ -75,12 +81,22 @@ service cloud.firestore {
       }
     }
 
-    // Question Bank (Admin managed, globally readable by signed-in users)
-    match /questions/{questionId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+    // --- COLLECTION GROUP RULES ---
+    // These allow the Admin Dashboard to query across all users for activity monitoring
+
+    match /{path=**}/purchases/{purchaseId} {
+      allow read: if isAdmin();
     }
 
+    match /{path=**}/testAttempts/{testAttemptId} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/lessonProgress/{progressId} {
+      allow read: if isAdmin();
+    }
+
+    // Nested resources in Topics (Legacy/Structured support)
     match /topics/{topicId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
