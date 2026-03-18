@@ -280,7 +280,7 @@ export default function MockTestPage() {
         <Card className="lg:col-span-5 shadow-xl border-white/5 bg-card/40 overflow-hidden">
           <CardHeader className="p-8">
             <Badge variant="outline" className="mb-4 w-fit border-secondary/30 text-secondary">{currentQuestion.category}</Badge>
-            <CardTitle className="text-2xl font-bold leading-tight text-primary">
+            <CardTitle className="text-2xl font-bold leading-tight text-secondary">
               {currentQuestion.text}
             </CardTitle>
           </CardHeader>
