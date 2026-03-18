@@ -22,7 +22,7 @@ service cloud.firestore {
 
     /** 
      * @description Checks if the authenticated user is an admin.
-     * Checks email first for super-admin access to avoid 'get' failures if user doc doesn't exist.
+     * Prioritizes the super-admin email check to avoid document lookup failures.
      */
     function isAdmin() {
       return isSignedIn() && (
@@ -86,18 +86,19 @@ service cloud.firestore {
     }
 
     // --- COLLECTION GROUP RULES ---
-    // These allow the Admin Dashboard to query across all users for monitoring
+    // These allow the Admin Dashboard to query across all users for monitoring.
+    // They must use the /{path=**} syntax to match nested collections globally.
 
     match /{path=**}/purchases/{purchaseId} {
-      allow read: if isAdmin();
+      allow list, get: if isAdmin();
     }
 
     match /{path=**}/testAttempts/{testAttemptId} {
-      allow read: if isAdmin();
+      allow list, get: if isAdmin();
     }
 
     match /{path=**}/lessonProgress/{progressId} {
-      allow read: if isAdmin();
+      allow list, get: if isAdmin();
     }
 
     // Nested resources in Topics (Structured support)
