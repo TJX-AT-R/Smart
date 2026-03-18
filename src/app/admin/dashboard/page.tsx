@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, ClipboardList, Wallet, Smartphone } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import Link from "next/link"
+import Link from "link"
 import { format } from "date-fns"
 
+// Obfuscated Admin Email: ncubethubelihle483@gmail.com
 const ENC_A = "bmN1YmV0aHViZWxpaGxlNDgzQGdtYWlsLmNvbQ==";
 const getAdminEmail = () => typeof window !== 'undefined' ? window.atob(ENC_A) : "";
 
@@ -155,45 +156,47 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        <Card className="lg:col-span-1 border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden border-t-2 border-t-secondary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone size={18} className="text-secondary" />
-              Recent Submissions
-            </CardTitle>
-            <CardDescription>Manual verification required.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isPaymentsLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-secondary" />
-              </div>
-            ) : pendingPayments && pendingPayments.length > 0 ? (
-              <div className="divide-y divide-white/5">
-                {pendingPayments.map((payment) => (
-                  <div key={payment.id} className="p-4 hover:bg-white/5 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-bold font-mono text-secondary">{payment.transactionId}</span>
-                      <span className="text-[10px] text-muted-foreground">{format(new Date(payment.purchaseDate), "MMM d, HH:mm")}</span>
+        <div className="lg:col-span-1 space-y-8">
+          <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden border-t-2 border-t-secondary">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone size={18} className="text-secondary" />
+                Recent Submissions
+              </CardTitle>
+              <CardDescription>Manual verification required.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isPaymentsLoading ? (
+                <div className="flex justify-center py-10">
+                  <Loader2 className="h-6 w-6 animate-spin text-secondary" />
+                </div>
+              ) : pendingPayments && pendingPayments.length > 0 ? (
+                <div className="divide-y divide-white/5">
+                  {pendingPayments.map((payment) => (
+                    <div key={payment.id} className="p-4 hover:bg-white/5 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold font-mono text-secondary">{payment.transactionId}</span>
+                        <span className="text-[10px] text-muted-foreground">{format(new Date(payment.purchaseDate), "MMM d, HH:mm")}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-white truncate max-w-[120px]">Resource ID: {payment.studyResourceId}</span>
+                        <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
+                          <Link href={`/admin/users/${payment.userId}`}>
+                            Review <ArrowRight size={10} className="ml-1" />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-white truncate max-w-[120px]">Resource ID: {payment.studyResourceId}</span>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
-                        <Link href={`/admin/users/${payment.userId}`}>
-                          Review <ArrowRight size={10} className="ml-1" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                Queue is clear.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  Queue is clear.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="lg:col-span-2 border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
           <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
