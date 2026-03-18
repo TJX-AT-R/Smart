@@ -4,14 +4,15 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy, doc, getDoc, limit } from "firebase/firestore"
+import { collection, query, orderBy, doc, getDoc, limit, updateDoc, serverTimestamp } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, Wallet, Smartphone, History, ShieldCheck } from "lucide-react"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, BarChart3, Database, Wallet, Smartphone, History, ShieldCheck, CheckCircle2, XCircle } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
+import { useToast } from "@/hooks/use-toast"
 
 const ENC_A = "bmN1YmV0aHViZWxpaGxlNDgzQGdtYWlsLmNvbQ==";
 const getAdminEmail = () => typeof window !== 'undefined' ? window.atob(ENC_A) : "";
@@ -21,8 +22,10 @@ export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
+  const { toast } = useToast()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [verifyingId, setVerifyingId] = useState<string | null>(null)
 
   useEffect(() => {
     async function verifyAdmin() {
@@ -55,12 +58,40 @@ export default function AdminDashboardPage() {
 
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || isAdmin === null) return null
-    return query(collection(db, "purchases"), orderBy("createdAt", "desc"), limit(10))
+    return query(collection(db, "purchases"), orderBy("createdAt", "desc"), limit(50))
   }, [db, isAdmin])
 
   const { data: transactions, isLoading: isTxLoading } = useCollection(transactionsQuery)
 
-  const totalRevenue = transactions?.reduce((acc, curr) => acc + (curr.amountPaidDollars || 0), 0) || 0
+  const handleVerifyPurchase = async (tx: any, newStatus: 'verified' | 'rejected') => {
+    if (!db) return
+    setVerifyingId(tx.id)
+    try {
+      const globalRef = doc(db, "purchases", tx.id)
+      const userRef = doc(db, "users", tx.userId, "purchases", tx.id)
+
+      const updateData = {
+        status: newStatus,
+        verifiedAt: serverTimestamp(),
+        verifiedBy: user?.email
+      }
+
+      await updateDoc(globalRef, updateData)
+      await updateDoc(userRef, updateData)
+
+      toast({
+        title: newStatus === 'verified' ? "Transaction Verified" : "Transaction Rejected",
+        description: `Reference ${tx.transactionId} has been updated.`
+      })
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: error.message })
+    } finally {
+      setVerifyingId(null)
+    }
+  }
+
+  const totalRevenue = transactions?.filter(t => t.status === 'verified').reduce((acc, curr) => acc + (curr.amountPaidDollars || 0), 0) || 0
+  const pendingCount = transactions?.filter(t => t.status === 'pending').length || 0
 
   const filteredUsers = learners?.filter(u => 
     u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,11 +148,23 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
               <Wallet size={12} className="text-secondary" />
-              Revenue (Log)
+              Total Verified Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl sm:text-3xl font-bold text-secondary tracking-tighter">${totalRevenue}.00</div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-primary/40 border-white/5 shadow-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+              <History size={12} className="text-amber-500" />
+              Pending Verifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl sm:text-3xl font-bold text-amber-500 tracking-tighter">{pendingCount}</div>
           </CardContent>
         </Card>
 
@@ -135,21 +178,9 @@ export default function AdminDashboardPage() {
           <CardContent className="space-y-2">
             <Button variant="secondary" size="sm" className="w-full text-[10px] h-7 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
               <Link href="/admin/questions">
-                Manage Questions <ArrowRight size={10} className="ml-1" />
+                Manage Repository <ArrowRight size={10} className="ml-1" />
               </Link>
             </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-primary/40 border-white/5 shadow-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
-              <BarChart3 size={12} className="text-secondary" />
-              Platform Avg.
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl sm:text-3xl font-bold text-white tracking-tighter">74%</div>
           </CardContent>
         </Card>
       </div>
@@ -159,7 +190,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base sm:text-lg italic uppercase tracking-tighter">EcoCash Activity</CardTitle>
-              <CardDescription className="text-[10px]">Funds directed to {ADMIN_ECOCASH_NUMBER}.</CardDescription>
+              <CardDescription className="text-[10px]">Verify incoming reference codes from {ADMIN_ECOCASH_NUMBER}.</CardDescription>
             </div>
             <History size={16} className="text-muted-foreground" />
           </CardHeader>
@@ -168,9 +199,9 @@ export default function AdminDashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Transaction / Sender</TableHead>
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Amount</TableHead>
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground text-right">Time</TableHead>
+                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Reference / Resource</TableHead>
+                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground text-right">Verification</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -186,14 +217,51 @@ export default function AdminDashboardPage() {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-white font-mono">{tx.transactionId}</span>
-                            <span className="text-[9px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <Smartphone size={8} /> {tx.ecoCashNumber || "N/A"}
+                            <span className="text-[9px] text-muted-foreground italic mt-0.5">
+                              {tx.resourceTitle || "Study Booklet"}
                             </span>
+                            <span className="text-[8px] text-muted-foreground/60 font-mono">{tx.userEmail}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-[10px] sm:text-xs font-bold text-secondary">${tx.amountPaidDollars}.00</TableCell>
-                        <TableCell className="text-right text-[9px] text-muted-foreground font-mono">
-                          {format(new Date(tx.createdAt?.toDate() || tx.purchaseDate), "MMM d, HH:mm")}
+                        <TableCell>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[8px] uppercase font-bold tracking-widest ${
+                              tx.status === 'verified' ? 'border-secondary/30 text-secondary bg-secondary/5' : 
+                              tx.status === 'pending' ? 'border-amber-500/30 text-amber-500 bg-amber-500/5' : 
+                              'border-destructive/30 text-destructive bg-destructive/5'
+                            }`}
+                          >
+                            {tx.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {tx.status === 'pending' ? (
+                            <div className="flex items-center justify-end gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-secondary hover:bg-secondary/10"
+                                onClick={() => handleVerifyPurchase(tx, 'verified')}
+                                disabled={verifyingId === tx.id}
+                              >
+                                <CheckCircle2 size={14} />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleVerifyPurchase(tx, 'rejected')}
+                                disabled={verifyingId === tx.id}
+                              >
+                                <XCircle size={14} />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-[9px] text-muted-foreground font-mono">
+                              {tx.verifiedAt ? format(new Date(tx.verifiedAt.toDate()), "MMM d, HH:mm") : 'Processed'}
+                            </span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))

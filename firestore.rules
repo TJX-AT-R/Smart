@@ -29,37 +29,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    match /topics/{topicId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-      
-      match /lessons/{lessonId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
-      }
-      
-      match /questions/{questionId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
-        
-        match /options/{optionId} {
-          allow read: if isSignedIn();
-          allow write: if isAdmin();
-        }
-      }
+    match /purchases/{purchaseId} {
+      allow read, write: if isAdmin();
     }
 
-    match /mockTests/{testId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    match /studyResources/{resourceId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    // User Data
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
@@ -92,7 +65,6 @@ service cloud.firestore {
     }
 
     // --- COLLECTION GROUP RULES ---
-    // Enable admin dashboard queries across all users
     
     match /{path=**}/purchases/{purchaseId} {
       allow list: if isAdmin();

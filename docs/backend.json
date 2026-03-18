@@ -40,20 +40,22 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Purchase",
       "type": "object",
-      "description": "An EcoCash transaction record.",
+      "description": "An EcoCash transaction record requiring admin verification.",
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
         "studyResourceId": { "type": "string" },
+        "resourceTitle": { "type": "string" },
         "purchaseDate": { "type": "string", "format": "date-time" },
         "amountPaidDollars": { "type": "number" },
-        "transactionId": { "type": "string" },
+        "transactionId": { "type": "string", "description": "The reference code pasted by the user." },
+        "status": { "type": "string", "enum": ["pending", "verified", "rejected"] },
         "paymentMethod": { "type": "string" },
         "ecoCashNumber": { "type": "string" },
         "recipientNumber": { "type": "string" },
         "createdAt": { "type": "object" }
       },
-      "required": ["id", "userId", "transactionId", "amountPaidDollars"]
+      "required": ["id", "userId", "transactionId", "status"]
     },
     "TestAttempt": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -115,6 +117,14 @@
           "entityName": "Purchase",
           "schema": { "$ref": "#/backend/entities/Purchase" },
           "description": "Learner transaction history."
+        }
+      },
+      {
+        "path": "/purchases/{purchaseId}",
+        "definition": {
+          "entityName": "Purchase",
+          "schema": { "$ref": "#/backend/entities/Purchase" },
+          "description": "Root level purchase records for easy admin access."
         }
       },
       {

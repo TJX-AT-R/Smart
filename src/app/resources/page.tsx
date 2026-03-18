@@ -7,7 +7,7 @@ import { MOCK_RESOURCES } from "../lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, ShoppingCart, Sparkles, Smartphone, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck, Crown } from "lucide-react"
+import { Download, ShoppingCart, Sparkles, Smartphone, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck, Crown, Clock, Copy, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 import {
@@ -37,8 +37,9 @@ export default function ResourcesPage() {
   
   const [selectedResource, setSelectedResource] = useState<any>(null)
   const [isPaying, setIsPaying] = useState(false)
-  const [payStep, setPayStep] = useState<'input' | 'processing' | 'success'>('input')
-  const [phoneNumber, setPhoneNumber] = useState("")
+  const [payStep, setPayStep] = useState<'instructions' | 'submit' | 'processing' | 'success'>('instructions')
+  const [referenceCode, setReferenceCode] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }))
 
@@ -56,10 +57,12 @@ export default function ResourcesPage() {
   const { data: userPurchases } = useCollection(purchasesQuery)
 
   const hasAccess = (resourceId: string) => {
-    // If user has global premium status, grant access instantly
     if (userData?.isPremium) return true
-    // Otherwise check individual purchases
-    return userPurchases?.some(p => p.studyResourceId === resourceId)
+    return userPurchases?.some(p => p.studyResourceId === resourceId && p.status === 'verified')
+  }
+
+  const isPending = (resourceId: string) => {
+    return userPurchases?.some(p => p.studyResourceId === resourceId && p.status === 'pending')
   }
 
   const handleStartPayment = (resource: any) => {
@@ -68,44 +71,57 @@ export default function ResourcesPage() {
       return
     }
     setSelectedResource(resource)
-    setPayStep('input')
+    setPayStep('instructions')
     setIsPaying(true)
   }
 
-  const processEcoCashPayment = async () => {
-    if (!phoneNumber.match(/^07[7-8][0-9]{7}$/)) {
-      toast({ variant: "destructive", title: "Invalid Number", description: "Please enter a valid EcoCash number (e.g. 0771234567)" })
+  const handleSubmitReference = async () => {
+    if (referenceCode.length < 5) {
+      toast({ variant: "destructive", title: "Invalid Reference", description: "Please enter the full reference code from your EcoCash SMS." })
       return
     }
 
+    setIsSubmitting(true)
     setPayStep('processing')
-    await new Promise(resolve => setTimeout(resolve, 3000))
 
     if (!db || !user || !selectedResource) return
 
     try {
-      const purchaseRef = doc(collection(db, "users", user.uid, "purchases"))
-      const transactionId = "EC-" + Math.random().toString(36).substring(2, 10).toUpperCase()
+      const purchaseId = `${user.uid}_${selectedResource.id}`
+      const userPurchaseRef = doc(db, "users", user.uid, "purchases", purchaseId)
+      const globalPurchaseRef = doc(db, "purchases", purchaseId)
       
       const purchaseData = {
-        id: purchaseRef.id,
+        id: purchaseId,
         userId: user.uid,
+        userEmail: user.email,
         studyResourceId: selectedResource.id,
+        resourceTitle: selectedResource.title,
         purchaseDate: new Date().toISOString(),
         amountPaidDollars: selectedResource.priceDollars,
-        transactionId: transactionId,
+        transactionId: referenceCode,
+        status: "pending",
         paymentMethod: "EcoCash",
-        ecoCashNumber: phoneNumber,
         recipientNumber: ADMIN_ECOCASH_NUMBER,
         createdAt: serverTimestamp()
       }
 
-      await setDoc(purchaseRef, purchaseData)
+      // Save to user sub-collection and root collection for admin
+      await setDoc(userPurchaseRef, purchaseData)
+      await setDoc(globalPurchaseRef, purchaseData)
+      
       setPayStep('success')
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Payment Failed", description: error.message })
-      setPayStep('input')
+      toast({ variant: "destructive", title: "Submission Failed", description: error.message })
+      setPayStep('submit')
+    } finally {
+      setIsSubmitting(false)
     }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({ title: "Copied!", description: "Number copied to clipboard." })
   }
 
   const handleDownload = (title: string) => {
@@ -130,7 +146,7 @@ export default function ResourcesPage() {
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 italic uppercase tracking-tighter">Study Resources</h1>
           <p className="text-muted-foreground text-base sm:text-xl leading-relaxed">
-            Unlock premium PDF study booklets via <span className="text-secondary font-bold">EcoCash USSD Push</span>. Direct settlement to official merchant.
+            Unlock premium PDF study booklets via <span className="text-secondary font-bold">Manual EcoCash Transfer</span>. Submit your reference code for instant admin verification.
           </p>
         </div>
       </section>
@@ -160,7 +176,7 @@ export default function ResourcesPage() {
                   <div className="absolute bottom-6 left-6 right-6 space-y-2">
                     <h3 className="text-lg sm:text-xl font-bold text-white line-clamp-1 italic">{res.title}</h3>
                     <Badge variant="secondary" className="bg-secondary/20 text-secondary border-none font-mono text-[10px] sm:text-xs">
-                      {hasAccess(res.id) ? "ACCESS GRANTED" : `$${res.priceDollars}.00`}
+                      {hasAccess(res.id) ? "ACCESS GRANTED" : isPending(res.id) ? "VERIFICATION PENDING" : `$${res.priceDollars}.00`}
                     </Badge>
                   </div>
                 </div>
@@ -175,6 +191,7 @@ export default function ResourcesPage() {
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           {MOCK_RESOURCES.map((res) => {
             const owned = hasAccess(res.id)
+            const pending = isPending(res.id)
             return (
               <Card key={res.id} className="flex flex-col sm:flex-row overflow-hidden border-white/5 bg-card/40 backdrop-blur-md group hover:border-secondary/30 transition-all duration-300 shadow-xl">
                 <div className="relative w-full sm:w-48 h-56 sm:h-auto overflow-hidden">
@@ -184,7 +201,7 @@ export default function ResourcesPage() {
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-700"
                   />
-                  {!owned && (
+                  {!owned && !pending && (
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center sm:hidden">
                        <Badge className="bg-primary/80 text-white font-mono">$5.00</Badge>
                     </div>
@@ -194,10 +211,10 @@ export default function ResourcesPage() {
                 <div className="flex-1 p-6 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-start">
-                      <Badge variant="secondary" className="text-[9px] h-5 bg-secondary/10 text-secondary border-secondary/20 uppercase font-bold tracking-widest">
-                        {owned ? "Unlocked" : "Locked"}
+                      <Badge variant="secondary" className={`text-[9px] h-5 uppercase font-bold tracking-widest ${owned ? 'bg-secondary/10 text-secondary border-secondary/20' : pending ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-muted/10 text-muted-foreground'}`}>
+                        {owned ? "Unlocked" : pending ? "Pending Verification" : "Locked"}
                       </Badge>
-                      {!owned && <span className="text-lg font-bold text-white font-mono hidden sm:inline-block">${res.priceDollars}.00</span>}
+                      {!owned && !pending && <span className="text-lg font-bold text-white font-mono hidden sm:inline-block">${res.priceDollars}.00</span>}
                     </div>
                     <CardTitle className="text-lg sm:text-xl text-white italic font-bold">{res.title}</CardTitle>
                     <CardDescription className="text-xs sm:text-sm leading-relaxed line-clamp-2 text-muted-foreground">
@@ -213,12 +230,19 @@ export default function ResourcesPage() {
                       >
                         <Download className="mr-2 h-4 w-4" /> Download Booklet
                       </Button>
+                    ) : pending ? (
+                      <Button 
+                        disabled
+                        className="w-full bg-amber-500/20 text-amber-500 border border-amber-500/30 h-12 font-bold uppercase tracking-widest text-[10px]"
+                      >
+                        <Clock className="mr-2 h-4 w-4 animate-pulse" /> Awaiting Verification
+                      </Button>
                     ) : (
                       <Button 
                         onClick={() => handleStartPayment(res)}
                         className="w-full bg-primary text-white hover:bg-primary/90 h-12 font-bold uppercase tracking-widest text-[10px] border border-white/5"
                       >
-                        <ShoppingCart className="mr-2 h-4 w-4" /> Buy via EcoCash
+                        <ShoppingCart className="mr-2 h-4 w-4" /> Unlock via EcoCash
                       </Button>
                     )}
                   </div>
@@ -233,50 +257,63 @@ export default function ResourcesPage() {
         <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10 sm:max-w-md w-[95vw] rounded-3xl mx-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl italic uppercase tracking-tighter text-white">
-              <Wallet className="text-secondary" /> EcoCash USSD Push
+              <Wallet className="text-secondary" /> Manual EcoCash Verification
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Content: <span className="text-secondary font-bold uppercase">{selectedResource?.title}</span>
+              Unlocking: <span className="text-secondary font-bold uppercase">{selectedResource?.title}</span>
             </DialogDescription>
           </DialogHeader>
 
-          {payStep === 'input' && (
+          {payStep === 'instructions' && (
             <div className="space-y-6 py-4">
-              <div className="p-4 rounded-2xl bg-primary/40 border border-white/5 flex items-center justify-between shadow-inner">
+              <div className="p-5 rounded-2xl bg-primary/40 border border-white/5 space-y-4 shadow-inner">
                 <div className="space-y-1">
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Recipient</p>
-                  <p className="text-xs font-bold text-white uppercase italic">SmartPass Payout</p>
+                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Step 1: Send Payment</p>
+                  <p className="text-sm text-white">Transfer <span className="text-secondary font-bold">${selectedResource?.priceDollars}.00</span> to the number below:</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Merchant Account</p>
-                  <p className="text-sm font-bold text-secondary font-mono tracking-tighter">{ADMIN_ECOCASH_NUMBER}</p>
+                
+                <div className="flex items-center justify-between bg-background/60 p-3 rounded-xl border border-white/10">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">EcoCash Merchant</span>
+                    <span className="text-xl font-mono text-secondary tracking-tighter">{ADMIN_ECOCASH_NUMBER}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(ADMIN_ECOCASH_NUMBER)} className="text-muted-foreground hover:text-white">
+                    <Copy size={18} />
+                  </Button>
+                </div>
+
+                <div className="flex gap-3 items-start p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                  <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={14} />
+                  <p className="text-[10px] text-amber-500 leading-tight">Ensure you keep your transaction SMS. You will need the reference code for verification.</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="ecocash-number" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Your Mobile Number</Label>
-                <Input 
-                  id="ecocash-number"
-                  placeholder="0771234567"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="bg-background/50 border-white/10 h-14 text-xl font-mono text-center tracking-widest"
-                />
-              </div>
-
-              <div className="p-4 rounded-2xl bg-secondary/5 border border-secondary/20 space-y-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <ShieldCheck size={14} className="text-secondary" />
-                  <p className="text-[10px] text-secondary font-bold uppercase tracking-widest">Verified Merchant</p>
-                </div>
-                <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
-                  A USSD prompt will appear on your device. Please enter your PIN to authorize the payment of <b>${selectedResource?.priceDollars}.00</b>.
-                </p>
-              </div>
-
-              <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={processEcoCashPayment}>
-                Pay Now
+              <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={() => setPayStep('submit')}>
+                I have sent the payment <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
+            </div>
+          )}
+
+          {payStep === 'submit' && (
+            <div className="space-y-6 py-4">
+              <div className="space-y-3">
+                <Label htmlFor="reference-code" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Paste EcoCash Reference Code</Label>
+                <Input 
+                  id="reference-code"
+                  placeholder="e.g. EC240830.1234.H12345"
+                  value={referenceCode}
+                  onChange={(e) => setReferenceCode(e.target.value)}
+                  className="bg-background/50 border-white/10 h-14 text-lg font-mono tracking-wider"
+                />
+                <p className="text-[9px] text-muted-foreground italic px-1">Verification usually takes 5-15 minutes during business hours.</p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="ghost" className="flex-1 h-12 text-xs font-bold uppercase tracking-widest" onClick={() => setPayStep('instructions')}>Back</Button>
+                <Button className="flex-[2] bg-secondary text-white hover:bg-secondary/90 h-12 text-xs font-bold shadow-xl shadow-secondary/20 uppercase tracking-widest" onClick={handleSubmitReference}>
+                  Submit for Review
+                </Button>
+              </div>
             </div>
           )}
 
@@ -284,11 +321,11 @@ export default function ResourcesPage() {
             <div className="flex flex-col items-center justify-center py-12 space-y-6">
               <div className="relative">
                 <Loader2 className="h-20 w-20 animate-spin text-secondary opacity-30" />
-                <Smartphone className="absolute inset-0 m-auto h-8 w-8 text-white animate-bounce" />
+                <ShieldCheck className="absolute inset-0 m-auto h-8 w-8 text-white animate-pulse" />
               </div>
               <div className="text-center space-y-2">
-                <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Requesting Payout...</p>
-                <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">Check your phone to authorize the settlement to <b>0789269145</b>.</p>
+                <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Encrypting Submission...</p>
+                <p className="text-xs text-muted-foreground max-w-[200px] mx-auto">Securing your reference code in the SmartPass vault.</p>
               </div>
             </div>
           )}
@@ -296,14 +333,14 @@ export default function ResourcesPage() {
           {payStep === 'success' && (
             <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in zoom-in-95">
               <div className="h-20 w-20 bg-secondary/10 rounded-full flex items-center justify-center text-secondary border-2 border-secondary/30 shadow-2xl shadow-secondary/10">
-                <CheckCircle2 size={48} />
+                <Clock size={48} className="animate-pulse" />
               </div>
               <div className="text-center space-y-2">
-                <p className="font-bold text-white text-2xl italic uppercase tracking-tighter">Access Unlocked</p>
-                <p className="text-sm text-muted-foreground px-4">Your premium study booklet is now ready for high-definition download.</p>
+                <p className="font-bold text-white text-2xl italic uppercase tracking-tighter">Review Requested</p>
+                <p className="text-sm text-muted-foreground px-4">Your reference code has been sent to the command center. Once verified, the booklet will unlock automatically.</p>
               </div>
               <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={() => setIsPaying(false)}>
-                Go to Booklet <ArrowRight className="ml-2 h-4 w-4" />
+                Understood <CheckCircle2 className="ml-2 h-4 w-4" />
               </Button>
             </div>
           )}
