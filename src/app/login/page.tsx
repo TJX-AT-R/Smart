@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth, useFirestore, useUser } from "@/firebase"
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"
 import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,16 +14,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Car, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 function AuthContent() {
   const searchParams = useSearchParams()
   const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "login"
   
   const [isLoading, setIsLoading] = useState(false)
+  const [isResetLoading, setIsResetLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [resetEmail, setResetEmail] = useState("")
+  const [isResetOpen, setIsResetOpen] = useState(false)
   
   const auth = useAuth()
   const db = useFirestore()
@@ -42,7 +54,6 @@ function AuthContent() {
     setIsLoading(true)
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      // Update last login date
       await updateDoc(doc(db, "users", userCredential.user.uid), {
         lastLoginDate: new Date().toISOString(),
         updatedAt: serverTimestamp()
@@ -66,7 +77,6 @@ function AuthContent() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const newUser = userCredential.user
 
-      // Save user profile to Firestore
       await setDoc(doc(db, "users", newUser.uid), {
         id: newUser.uid,
         email: email,
@@ -87,6 +97,30 @@ function AuthContent() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast({ variant: "destructive", title: "Email required", description: "Please enter your email address." })
+      return
+    }
+    setIsResetLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, resetEmail)
+      toast({
+        title: "Reset Email Sent",
+        description: "Check your inbox for password reset instructions.",
+      })
+      setIsResetOpen(false)
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Could not send reset email.",
+      })
+    } finally {
+      setIsResetLoading(false)
     }
   }
 
@@ -142,7 +176,42 @@ function AuthContent() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Password</Label>
+                      <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="link" className="px-0 font-normal text-xs text-secondary hover:text-secondary/80 h-auto">
+                            Forgot password?
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-card border-white/5">
+                          <DialogHeader>
+                            <DialogTitle>Reset Password</DialogTitle>
+                            <DialogDescription>
+                              Enter your email address and we'll send you a link to reset your password.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <Label htmlFor="reset-email">Email Address</Label>
+                            <Input 
+                              id="reset-email" 
+                              type="email" 
+                              placeholder="name@example.com" 
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              className="bg-background/50 border-white/10 mt-2"
+                            />
+                          </div>
+                          <DialogFooter>
+                            <Button variant="ghost" onClick={() => setIsResetOpen(false)} disabled={isResetLoading}>Cancel</Button>
+                            <Button className="bg-secondary text-white hover:bg-secondary/90" onClick={handlePasswordReset} disabled={isResetLoading}>
+                              {isResetLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                              Send Reset Link
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <Input 
                       id="login-password" 
                       type="password" 

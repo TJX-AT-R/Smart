@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth, useFirestore, useUser } from "@/firebase"
-import { signInWithEmailAndPassword } from "firebase/auth"
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,13 +13,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ShieldAlert, Loader2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 
 export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [isResetLoading, setIsResetLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [resetEmail, setResetEmail] = useState("")
+  const [isResetOpen, setIsResetOpen] = useState(false)
   
   const auth = useAuth()
   const db = useFirestore()
@@ -53,7 +65,6 @@ export default function AdminLoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const loggedInUser = userCredential.user
       
-      // Check if specifically the authorized super admin or has the isAdmin flag
       if (loggedInUser.email === SUPER_ADMIN_EMAIL) {
         toast({
           title: "Super Admin Access Granted",
@@ -86,6 +97,30 @@ export default function AdminLoginPage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      toast({ variant: "destructive", title: "Email required", description: "Please enter your email address." })
+      return
+    }
+    setIsResetLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, resetEmail)
+      toast({
+        title: "Reset Email Sent",
+        description: "Check your inbox for password reset instructions.",
+      })
+      setIsResetOpen(false)
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Could not send reset email.",
+      })
+    } finally {
+      setIsResetLoading(false)
     }
   }
 
@@ -133,7 +168,42 @@ export default function AdminLoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="admin-password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="admin-password">Password</Label>
+                  <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="link" className="px-0 font-normal text-xs text-destructive hover:text-destructive/80 h-auto">
+                        Forgot password?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-white/5">
+                      <DialogHeader>
+                        <DialogTitle>Admin Password Reset</DialogTitle>
+                        <DialogDescription>
+                          Enter your admin email address to receive a reset link.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4">
+                        <Label htmlFor="admin-reset-email">Email Address</Label>
+                        <Input 
+                          id="admin-reset-email" 
+                          type="email" 
+                          placeholder="admin@example.com" 
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          className="bg-background/50 border-white/10 mt-2"
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button variant="ghost" onClick={() => setIsResetOpen(false)} disabled={isResetLoading}>Cancel</Button>
+                        <Button className="bg-destructive text-white hover:bg-destructive/90" onClick={handlePasswordReset} disabled={isResetLoading}>
+                          {isResetLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                          Send Reset Link
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 <Input 
                   id="admin-password" 
                   type="password" 
