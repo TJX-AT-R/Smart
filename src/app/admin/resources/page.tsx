@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -36,6 +37,8 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { MOCK_RESOURCES } from "@/app/lib/data"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 
@@ -136,50 +139,60 @@ export default function AdminResourcesPage() {
     )
   }
 
-  const handleSaveResource = async () => {
+  const handleSaveResource = () => {
     if (!db || !resourceForm.title || !resourceForm.downloadUrl) {
-      toast({ variant: "destructive", title: "Validation Error", description: "Resources must have a title and a valid download URL (or uploaded file)." })
+      toast({ variant: "destructive", title: "Validation Error", description: "Resources must have a title and a valid download URL." })
       return
     }
 
     setIsSaving(true)
-    try {
-      if (editingId) {
-        const resourceRef = doc(db, "studyResources", editingId)
-        await updateDoc(resourceRef, {
-          ...resourceForm,
-          updatedAt: serverTimestamp()
-        })
-        toast({ title: "Resource Updated", description: "Successfully updated in the library." })
-      } else {
-        const resourceRef = doc(collection(db, "studyResources"))
-        await setDoc(resourceRef, {
-          ...resourceForm,
-          id: resourceRef.id,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        })
-        toast({ title: "Resource Added", description: "Successfully added to the booklet library." })
+    if (editingId) {
+      const resourceRef = doc(db, "studyResources", editingId)
+      updateDoc(resourceRef, {
+        ...resourceForm,
+        updatedAt: serverTimestamp()
+      }).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: resourceRef.path,
+          operation: 'update',
+          requestResourceData: resourceForm
+        }))
+      })
+      toast({ title: "Resource Updated", description: "Changes synced to library." })
+    } else {
+      const resourceRef = doc(collection(db, "studyResources"))
+      const newResource = {
+        ...resourceForm,
+        id: resourceRef.id,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       }
-      setIsDialogOpen(false)
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Sync Error", description: error.message })
-    } finally {
-      setIsSaving(false)
+      setDoc(resourceRef, newResource).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: resourceRef.path,
+          operation: 'create',
+          requestResourceData: newResource
+        }))
+      })
+      toast({ title: "Resource Added", description: "New booklet published." })
     }
+    
+    setIsSaving(false)
+    setIsDialogOpen(false)
   }
 
-  const handleDeleteResource = async (id: string) => {
-    if (!db || !confirm("Permanently remove this booklet from the library?")) return
+  const handleDeleteResource = (id: string) => {
+    if (!db || !confirm("Permanently remove this booklet?")) return
     setIsDeleting(id)
-    try {
-      await deleteDoc(doc(db, "studyResources", id))
-      toast({ title: "Resource Terminated" })
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message })
-    } finally {
-      setIsDeleting(null)
-    }
+    const resourceRef = doc(db, "studyResources", id)
+    deleteDoc(resourceRef).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: resourceRef.path,
+        operation: 'delete'
+      }))
+    })
+    toast({ title: "Resource Terminated" })
+    setIsDeleting(null)
   }
 
   const handleSeedResources = async () => {

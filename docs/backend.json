@@ -15,7 +15,8 @@
         "lastLoginDate": { "type": "string", "format": "date-time" },
         "isAdmin": { "type": "boolean" },
         "isPremium": { "type": "boolean", "description": "Whether the user has global access to all premium content." },
-        "createdAt": { "type": "object", "description": "Firestore ServerTimestamp" }
+        "createdAt": { "type": "object", "description": "Firestore ServerTimestamp" },
+        "updatedAt": { "type": "object" }
       },
       "required": ["id", "email", "firstName", "lastName", "registrationDate"]
     },
@@ -32,7 +33,8 @@
         "correctAnswer": { "type": "string" },
         "explanation": { "type": "string" },
         "imageUrl": { "type": "string" },
-        "createdAt": { "type": "object" }
+        "createdAt": { "type": "object" },
+        "updatedAt": { "type": "object" }
       },
       "required": ["id", "text", "category", "options", "correctAnswer"]
     },
@@ -48,7 +50,8 @@
         "priceDollars": { "type": "number" },
         "downloadUrl": { "type": "string" },
         "thumbnailUrl": { "type": "string" },
-        "createdAt": { "type": "object" }
+        "createdAt": { "type": "object" },
+        "updatedAt": { "type": "object" }
       },
       "required": ["id", "title", "priceDollars", "downloadUrl"]
     },
@@ -60,6 +63,7 @@
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
         "studyResourceId": { "type": "string" },
         "resourceTitle": { "type": "string" },
         "purchaseDate": { "type": "string", "format": "date-time" },
@@ -69,6 +73,8 @@
         "paymentMethod": { "type": "string" },
         "ecoCashNumber": { "type": "string" },
         "recipientNumber": { "type": "string" },
+        "verifiedAt": { "type": "object" },
+        "verifiedBy": { "type": "string" },
         "createdAt": { "type": "object" }
       },
       "required": ["id", "userId", "transactionId", "status"]

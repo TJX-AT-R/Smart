@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -33,6 +34,8 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { MOCK_QUESTIONS } from "@/app/lib/data"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 
@@ -105,50 +108,60 @@ export default function AdminQuestionsPage() {
     setIsDialogOpen(true)
   }
 
-  const handleSaveQuestion = async () => {
+  const handleSaveQuestion = () => {
     if (!db || !questionForm.text || !questionForm.correctAnswer) {
-      toast({ variant: "destructive", title: "Validation Error", description: "Questions must have text and a designated correct answer." })
+      toast({ variant: "destructive", title: "Validation Error", description: "Questions must have text and a correct answer." })
       return
     }
 
     setIsSaving(true)
-    try {
-      if (editingId) {
-        const questionRef = doc(db, "questions", editingId)
-        await updateDoc(questionRef, {
-          ...questionForm,
-          updatedAt: serverTimestamp()
-        })
-        toast({ title: "Scenario Updated", description: "The existing bank entry has been synchronized." })
-      } else {
-        const questionRef = doc(collection(db, "questions"))
-        await setDoc(questionRef, {
-          ...questionForm,
-          id: questionRef.id,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        })
-        toast({ title: "Repository Updated", description: "New scenario locked into the bank." })
+    if (editingId) {
+      const questionRef = doc(db, "questions", editingId)
+      updateDoc(questionRef, {
+        ...questionForm,
+        updatedAt: serverTimestamp()
+      }).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: questionRef.path,
+          operation: 'update',
+          requestResourceData: questionForm
+        }))
+      })
+      toast({ title: "Scenario Updated", description: "Repository synced." })
+    } else {
+      const questionRef = doc(collection(db, "questions"))
+      const newQuestion = {
+        ...questionForm,
+        id: questionRef.id,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       }
-      setIsDialogOpen(false)
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Sync Error", description: error.message })
-    } finally {
-      setIsSaving(false)
+      setDoc(questionRef, newQuestion).catch(async (err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: questionRef.path,
+          operation: 'create',
+          requestResourceData: newQuestion
+        }))
+      })
+      toast({ title: "Scenario Added", description: "New theory entry locked." })
     }
+    
+    setIsSaving(false)
+    setIsDialogOpen(false)
   }
 
-  const handleDeleteQuestion = async (id: string) => {
-    if (!db || !confirm("Are you sure you want to permanently delete this question?")) return
+  const handleDeleteQuestion = (id: string) => {
+    if (!db || !confirm("Permanently delete this scenario?")) return
     setIsDeleting(id)
-    try {
-      await deleteDoc(doc(db, "questions", id))
-      toast({ title: "Scenario Terminated", description: "Successfully removed from the bank." })
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message })
-    } finally {
-      setIsDeleting(null)
-    }
+    const questionRef = doc(db, "questions", id)
+    deleteDoc(questionRef).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: questionRef.path,
+        operation: 'delete'
+      }))
+    })
+    toast({ title: "Scenario Terminated" })
+    setIsDeleting(null)
   }
 
   const handleSeedQuestions = async () => {
@@ -216,7 +229,7 @@ export default function AdminQuestionsPage() {
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Scenario Question Text</Label>
                   <Input 
-                    placeholder="e.g. What is the national speed limit on a single carriageway?" 
+                    placeholder="e.g. What is the national speed limit?" 
                     value={questionForm.text}
                     onChange={(e) => setQuestionForm({...questionForm, text: e.target.value})}
                     className="bg-background/50 border-white/10 h-12"
@@ -282,7 +295,7 @@ export default function AdminQuestionsPage() {
                     Official Explanation
                   </Label>
                   <Textarea 
-                    placeholder="Explain why this answer is correct for the learner..." 
+                    placeholder="Explain why this answer is correct..." 
                     value={questionForm.explanation}
                     onChange={(e) => setQuestionForm({...questionForm, explanation: e.target.value})}
                     className="bg-background/50 border-white/10 min-h-[100px]"
@@ -302,7 +315,7 @@ export default function AdminQuestionsPage() {
       <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-2xl">
         <CardHeader className="bg-primary/20 border-b border-white/5">
           <CardTitle className="text-lg italic uppercase tracking-tighter">Bank Overview</CardTitle>
-          <CardDescription className="text-xs uppercase tracking-widest font-bold">Listing {questions?.length || 0} active scenarios in the SmartPass database.</CardDescription>
+          <CardDescription className="text-xs uppercase tracking-widest font-bold">Listing {questions?.length || 0} active scenarios.</CardDescription>
         </CardHeader>
         <CardContent className="px-0 sm:px-6">
           <div className="overflow-x-auto">
@@ -365,7 +378,7 @@ export default function AdminQuestionsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-20 text-muted-foreground text-[10px] uppercase tracking-widest font-bold">
-                      Zero Scenarios Detected. <br /> Use "Synchronize Master Bank" to begin.
+                      Zero Scenarios Detected.
                     </TableCell>
                   </TableRow>
                 )}

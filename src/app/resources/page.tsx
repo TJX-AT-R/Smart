@@ -20,6 +20,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { doc, setDoc, collection, serverTimestamp, query, orderBy } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 const ADMIN_ECOCASH_NUMBER = "0789269145"
 
@@ -63,7 +65,7 @@ export default function ResourcesPage() {
 
   const handleStartPayment = (resource: any) => {
     if (hasAccess(resource.id)) {
-      toast({ title: "Already Owned", description: "You already have access to this resource." })
+      toast({ title: "Already Owned", description: "Access active." })
       return
     }
     setSelectedResource(resource)
@@ -71,9 +73,9 @@ export default function ResourcesPage() {
     setIsPaying(true)
   }
 
-  const handleSubmitReference = async () => {
+  const handleSubmitReference = () => {
     if (referenceCode.length < 5) {
-      toast({ variant: "destructive", title: "Invalid Reference", description: "Please enter the full reference code from your EcoCash SMS." })
+      toast({ variant: "destructive", title: "Invalid Reference", description: "Enter full code from SMS." })
       return
     }
 
@@ -82,36 +84,43 @@ export default function ResourcesPage() {
 
     if (!db || !user || !selectedResource) return
 
-    try {
-      const purchaseId = `${user.uid}_${selectedResource.id}_${Date.now()}`
-      const userPurchaseRef = doc(db, "users", user.uid, "purchases", purchaseId)
-      const globalPurchaseRef = doc(db, "purchases", purchaseId)
-      
-      const purchaseData = {
-        id: purchaseId,
-        userId: user.uid,
-        userEmail: user.email,
-        studyResourceId: selectedResource.id,
-        resourceTitle: selectedResource.title,
-        purchaseDate: new Date().toISOString(),
-        amountPaidDollars: selectedResource.priceDollars,
-        transactionId: referenceCode,
-        status: "pending",
-        paymentMethod: "EcoCash",
-        recipientNumber: ADMIN_ECOCASH_NUMBER,
-        createdAt: serverTimestamp()
-      }
-
-      await setDoc(userPurchaseRef, purchaseData)
-      await setDoc(globalPurchaseRef, purchaseData)
-      
-      setPayStep('success')
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Submission Failed", description: error.message })
-      setPayStep('submit')
-    } finally {
-      setIsSubmitting(false)
+    const purchaseId = `${user.uid}_${selectedResource.id}_${Date.now()}`
+    const userPurchaseRef = doc(db, "users", user.uid, "purchases", purchaseId)
+    const globalPurchaseRef = doc(db, "purchases", purchaseId)
+    
+    const purchaseData = {
+      id: purchaseId,
+      userId: user.uid,
+      userEmail: user.email,
+      studyResourceId: selectedResource.id,
+      resourceTitle: selectedResource.title,
+      purchaseDate: new Date().toISOString(),
+      amountPaidDollars: selectedResource.priceDollars,
+      transactionId: referenceCode,
+      status: "pending",
+      paymentMethod: "EcoCash",
+      recipientNumber: ADMIN_ECOCASH_NUMBER,
+      createdAt: serverTimestamp()
     }
+
+    setDoc(userPurchaseRef, purchaseData).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: userPurchaseRef.path,
+        operation: 'create',
+        requestResourceData: purchaseData
+      }))
+    })
+
+    setDoc(globalPurchaseRef, purchaseData).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: globalPurchaseRef.path,
+        operation: 'create',
+        requestResourceData: purchaseData
+      }))
+    })
+    
+    setPayStep('success')
+    setIsSubmitting(false)
   }
 
   const copyToClipboard = (text: string) => {
@@ -124,10 +133,10 @@ export default function ResourcesPage() {
       window.open(res.downloadUrl, '_blank')
       toast({
         title: "Download Initiated",
-        description: `Your copy of "${res.title}" is opening in a new tab.`,
+        description: `Booklet opening in new tab.`,
       })
     } else {
-      toast({ variant: "destructive", title: "Link Error", description: "The download link for this resource is currently unavailable." })
+      toast({ variant: "destructive", title: "Link Error", description: "Download link unavailable." })
     }
   }
 
@@ -146,7 +155,7 @@ export default function ResourcesPage() {
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 italic uppercase tracking-tighter">Study Resources</h1>
           <p className="text-muted-foreground text-base sm:text-xl leading-relaxed">
-            Unlock premium PDF study booklets via <span className="text-secondary font-bold">Manual EcoCash Transfer</span>. Submit your reference code for instant admin verification.
+            Unlock premium PDF booklets via <span className="text-secondary font-bold">Manual EcoCash Transfer</span>. Submit reference code for instant verification.
           </p>
         </div>
       </section>
@@ -183,7 +192,7 @@ export default function ResourcesPage() {
                     <div className="space-y-2">
                       <div className="flex justify-between items-start">
                         <Badge variant="secondary" className={`text-[9px] h-5 uppercase font-bold tracking-widest ${owned ? 'bg-secondary/10 text-secondary border-secondary/20' : pending ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-muted/10 text-muted-foreground'}`}>
-                          {owned ? "Unlocked" : pending ? "Pending Verification" : "Locked"}
+                          {owned ? "Unlocked" : pending ? "Pending" : "Locked"}
                         </Badge>
                         {!owned && !pending && <span className="text-lg font-bold text-white font-mono hidden sm:inline-block">${res.priceDollars}.00</span>}
                       </div>
@@ -223,7 +232,7 @@ export default function ResourcesPage() {
             })}
           </div>
         ) : (
-          <div className="text-center py-20 text-muted-foreground italic">No study resources found in the library.</div>
+          <div className="text-center py-20 text-muted-foreground italic">No study resources found.</div>
         )}
       </div>
 
@@ -258,7 +267,7 @@ export default function ResourcesPage() {
 
                 <div className="flex gap-3 items-start p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                   <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={14} />
-                  <p className="text-[10px] text-amber-500 leading-tight">After sending, wait for the SMS confirmation. You will need to paste the Reference Code in the next step.</p>
+                  <p className="text-[10px] text-amber-500 leading-tight">After sending, paste the Reference Code in the next step.</p>
                 </div>
               </div>
 
@@ -279,7 +288,6 @@ export default function ResourcesPage() {
                   onChange={(e) => setReferenceCode(e.target.value)}
                   className="bg-background/50 border-white/10 h-14 text-lg font-mono tracking-wider"
                 />
-                <p className="text-[9px] text-muted-foreground italic px-1">Admin will verify this code against their EcoCash statement.</p>
               </div>
 
               <div className="flex gap-3">
@@ -293,13 +301,8 @@ export default function ResourcesPage() {
 
           {payStep === 'processing' && (
             <div className="flex flex-col items-center justify-center py-12 space-y-6">
-              <div className="relative">
-                <Loader2 className="h-20 w-20 animate-spin text-secondary opacity-30" />
-                <ShieldCheck className="absolute inset-0 m-auto h-8 w-8 text-white animate-pulse" />
-              </div>
-              <div className="text-center space-y-2">
-                <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Submitting Reference...</p>
-              </div>
+              <Loader2 className="h-20 w-20 animate-spin text-secondary opacity-30" />
+              <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Submitting Reference...</p>
             </div>
           )}
 
@@ -310,7 +313,7 @@ export default function ResourcesPage() {
               </div>
               <div className="text-center space-y-2">
                 <p className="font-bold text-white text-2xl italic uppercase tracking-tighter">Reference Submitted</p>
-                <p className="text-sm text-muted-foreground px-4">Admin will verify your payment shortly. Check back in 15 minutes.</p>
+                <p className="text-sm text-muted-foreground px-4">Admin will verify shortly. Check back in 15 minutes.</p>
               </div>
               <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={() => setIsPaying(false)}>
                 Return to Library <CheckCircle2 className="ml-2 h-4 w-4" />

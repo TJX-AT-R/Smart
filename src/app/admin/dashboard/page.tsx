@@ -9,10 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, Database, Wallet, History, ShieldCheck, CheckCircle2, XCircle, Download } from "lucide-react"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, Database, Wallet, History, ShieldCheck, CheckCircle2, XCircle } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 const ENC_A = "bmN1YmV0aHViZWxpaGxlNDgzQGdtYWlsLmNvbQ==";
 const getAdminEmail = () => typeof window !== 'undefined' ? window.atob(ENC_A) : "";
@@ -63,31 +65,40 @@ export default function AdminDashboardPage() {
 
   const { data: transactions, isLoading: isTxLoading } = useCollection(transactionsQuery)
 
-  const handleVerifyPurchase = async (tx: any, newStatus: 'verified' | 'rejected') => {
+  const handleVerifyPurchase = (tx: any, newStatus: 'verified' | 'rejected') => {
     if (!db) return
     setVerifyingId(tx.id)
-    try {
-      const globalRef = doc(db, "purchases", tx.id)
-      const userRef = doc(db, "users", tx.userId, "purchases", tx.id)
+    
+    const globalRef = doc(db, "purchases", tx.id)
+    const userRef = doc(db, "users", tx.userId, "purchases", tx.id)
 
-      const updateData = {
-        status: newStatus,
-        verifiedAt: serverTimestamp(),
-        verifiedBy: user?.email
-      }
-
-      await updateDoc(globalRef, updateData)
-      await updateDoc(userRef, updateData)
-
-      toast({
-        title: newStatus === 'verified' ? "Transaction Verified" : "Transaction Rejected",
-        description: `Reference ${tx.transactionId} has been updated.`
-      })
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Update Failed", description: error.message })
-    } finally {
-      setVerifyingId(null)
+    const updateData = {
+      status: newStatus,
+      verifiedAt: serverTimestamp(),
+      verifiedBy: user?.email
     }
+
+    updateDoc(globalRef, updateData).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: globalRef.path,
+        operation: 'update',
+        requestResourceData: updateData
+      }))
+    })
+
+    updateDoc(userRef, updateData).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update',
+        requestResourceData: updateData
+      }))
+    })
+
+    toast({
+      title: newStatus === 'verified' ? "Reference Verified" : "Reference Rejected",
+      description: `Reference ${tx.transactionId} updated.`
+    })
+    setVerifyingId(null)
   }
 
   const totalRevenue = transactions?.filter(t => t.status === 'verified').reduce((acc, curr) => acc + (curr.amountPaidDollars || 0), 0) || 0
@@ -148,7 +159,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
               <Wallet size={12} className="text-secondary" />
-              Total Verified Revenue
+              Verified Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -160,7 +171,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
               <History size={12} className="text-amber-500" />
-              Pending Verifications
+              Pending Verification
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -172,13 +183,13 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
               <Database size={12} className="text-secondary" />
-              Content Controls
+              Repository Controls
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="secondary" size="sm" className="w-full text-[10px] h-7 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
               <Link href="/admin/questions">
-                Theory Repository <ArrowRight size={10} className="ml-1" />
+                Theory Bank <ArrowRight size={10} className="ml-1" />
               </Link>
             </Button>
             <Button variant="secondary" size="sm" className="w-full text-[10px] h-7 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
@@ -195,7 +206,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base sm:text-lg italic uppercase tracking-tighter">EcoCash Activity</CardTitle>
-              <CardDescription className="text-[10px]">Verify incoming reference codes from learners.</CardDescription>
+              <CardDescription className="text-[10px]">Verify incoming reference codes.</CardDescription>
             </div>
             <History size={16} className="text-muted-foreground" />
           </CardHeader>
@@ -206,7 +217,7 @@ export default function AdminDashboardPage() {
                   <TableRow className="border-white/5 hover:bg-transparent">
                     <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Reference / Resource</TableHead>
                     <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Status</TableHead>
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground text-right">Verification</TableHead>
+                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -222,9 +233,7 @@ export default function AdminDashboardPage() {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-white font-mono">{tx.transactionId}</span>
-                            <span className="text-[9px] text-muted-foreground italic mt-0.5">
-                              {tx.resourceTitle || "Study Booklet"}
-                            </span>
+                            <span className="text-[9px] text-muted-foreground italic mt-0.5">{tx.resourceTitle || "Study Booklet"}</span>
                             <span className="text-[8px] text-muted-foreground/60 font-mono">{tx.userEmail}</span>
                           </div>
                         </TableCell>
@@ -264,7 +273,7 @@ export default function AdminDashboardPage() {
                             </div>
                           ) : (
                             <span className="text-[9px] text-muted-foreground font-mono">
-                              {tx.verifiedAt ? format(new Date(tx.verifiedAt.toDate()), "MMM d, HH:mm") : 'Processed'}
+                              {tx.verifiedAt ? format(new Date(tx.verifiedAt.toDate()), "MMM d, HH:mm") : 'Done'}
                             </span>
                           )}
                         </TableCell>

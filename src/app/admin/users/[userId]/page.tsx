@@ -15,8 +15,9 @@ import { ChevronLeft, Loader2, BookOpen, User as UserIcon, CheckCircle2, Crown, 
 import { format } from "date-fns"
 import { MOCK_LESSONS } from "@/app/lib/data"
 import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
-// Obfuscated Admin Email: ncubethubelihle483@gmail.com
 const ENC_A = "bmN1YmV0aHViZWxpaGxlNDgzQGdtYWlsLmNvbQ==";
 const getAdminEmail = () => typeof window !== 'undefined' ? window.atob(ENC_A) : "";
 
@@ -77,39 +78,30 @@ export default function AdminUserProgressPage() {
 
   const { data: lessonProgress, isLoading: isLessonsLoading } = useCollection(lessonsQuery)
 
-  const togglePremiumAccess = async () => {
-    if (!db || !userId) return
+  const togglePremiumAccess = () => {
+    if (!db || !userId || !learner) return
     setIsUpdatingStatus(true)
-    try {
-      const currentStatus = !!learner?.isPremium
-      await updateDoc(doc(db, "users", userId), {
-        isPremium: !currentStatus,
-        updatedAt: serverTimestamp()
-      })
-      toast({
-        title: !currentStatus ? "Premium Access Granted" : "Premium Access Revoked",
-        description: `Learner status updated successfully.`,
-      })
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: error.message,
-      })
-    } finally {
-      setIsUpdatingStatus(false)
+    
+    const learnerRef = doc(db, "users", userId)
+    const newStatus = !learner.isPremium
+    const updateData = {
+      isPremium: newStatus,
+      updatedAt: serverTimestamp()
     }
-  }
 
-  const stats = {
-    totalTests: tests?.length || 0,
-    avgScore: tests?.length 
-      ? Math.round(tests.reduce((acc, curr) => acc + curr.scorePercentage, 0) / tests.length) 
-      : 0,
-    bestScore: tests?.length 
-      ? Math.max(...tests.map(t => t.scorePercentage)) 
-      : 0,
-    lessonsCompleted: lessonProgress?.filter(p => p.isCompleted).length || 0
+    updateDoc(learnerRef, updateData).catch(async (err) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: learnerRef.path,
+        operation: 'update',
+        requestResourceData: updateData
+      }))
+    })
+
+    toast({
+      title: newStatus ? "Premium Access Granted" : "Premium Access Revoked",
+      description: `User status synced.`
+    })
+    setIsUpdatingStatus(false)
   }
 
   if (isAuthLoading || isAdmin === null || isUserLoading) {
