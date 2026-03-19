@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info, ArrowRight } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser, useAuth } from "@/firebase"
@@ -59,8 +59,8 @@ export default function LandingPage() {
               <Link className="text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/login">
                 Login
               </Link>
-              <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
-                <Link href="/login">Get Started</Link>
+              <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold uppercase tracking-widest text-[10px]">
+                <Link href="/login" className="flex items-center gap-2">Get Started <ArrowRight size={12} /></Link>
               </Button>
             </div>
           )}
@@ -158,16 +158,16 @@ export default function LandingPage() {
             <div className="grid gap-12 lg:grid-cols-2 items-center">
               <div className="flex flex-col justify-center space-y-8 sm:space-y-10 animate-in slide-in-from-left duration-700 relative z-10 text-center lg:text-left">
                 <div className="space-y-4 sm:space-y-6">
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-8xl/none font-extrabold tracking-tighter text-white uppercase italic">
-                    SmartPass <br /><span className="text-secondary font-normal not-italic block sm:inline">First Time Success</span>
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-8xl/none font-extrabold tracking-tighter text-white uppercase italic text-balance">
+                    SmartPass <br /><span className="text-secondary font-normal not-italic block sm:inline">Guaranteed Pass</span>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed mx-auto lg:mx-0">
-                    The futuristic driving theory coach with realistic mock tests and high-performance study modules.
+                    The futuristic driving theory coach with professionally prepared tests and high-performance study modules.
                   </p>
                 </div>
                 <div className="flex flex-col gap-4 sm:flex-row justify-center lg:justify-start">
-                  <Button asChild size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-lg sm:text-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-xl shadow-secondary/20">
-                    <Link href="/login">Get Started Free</Link>
+                  <Button asChild size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-lg sm:text-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-xl shadow-secondary/20 font-bold uppercase italic tracking-tighter">
+                    <Link href="/login" className="flex items-center gap-3">Get Started <ArrowRight className="h-5 w-5" /></Link>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-lg sm:text-xl border-white/10 hover:bg-white/5 text-white">
                     <Link href="/about">Learn More</Link>
@@ -180,11 +180,11 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle className="text-secondary h-4 w-4 sm:h-5 sm:w-5" />
-                    <span>professionally prepared tests</span>
+                    <span>Professionally Prepared</span>
                   </div>
                 </div>
               </div>
-              <div className="relative animate-in zoom-in duration-1000 delay-200 hidden sm:block lg:block">
+              <div className="relative animate-in zoom-in duration-1000 delay-200 hidden lg:block">
                 <div className="absolute -inset-20 bg-secondary/20 rounded-full blur-[120px] opacity-30" />
                 <div className="relative border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
                   <img
@@ -200,13 +200,13 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-20 sm:py-32 relative">
+        <section id="features" className="w-full py-20 sm:py-32 relative bg-primary/10">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center space-y-4 mb-12 sm:mb-20">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-white">Advanced Learning</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-white italic uppercase">Advanced Learning</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">Precision tools engineered to guarantee your driving theory success.</p>
             </div>
-            <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               <FeatureCard 
                 icon={<BookOpen size={32} />}
                 title="Theory Modules"
@@ -220,7 +220,7 @@ export default function LandingPage() {
               />
               <FeatureCard 
                 icon={<Clock size={32} />}
-                title="Timed Mock Tests"
+                title="8-Min Mock Tests"
                 description="Practice with 8-minute timed sessions that feel like the real thing."
               />
             </div>
@@ -228,7 +228,7 @@ export default function LandingPage() {
         </section>
       </main>
       
-      <footer className="border-t border-white/5 py-12 sm:py-16 px-4 sm:px-6 bg-muted/20 backdrop-blur-sm">
+      <footer className="border-t border-white/5 py-12 sm:py-16 px-4 sm:px-6 bg-muted/20 backdrop-blur-sm mt-auto">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-8 sm:gap-10">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center text-white border border-white/10">
@@ -236,12 +236,12 @@ export default function LandingPage() {
             </div>
             <span className="font-bold text-xl text-white uppercase italic">SmartPass</span>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">© 2026 SmartPass Coach. Engineered for future drivers.</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center md:text-left font-bold uppercase tracking-widest">© 2026 SmartPass Coach. Engineered for future drivers.</p>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-            <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/about">About Us</Link>
-            <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="/admin/login">Admin Login</Link>
-            <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Privacy</Link>
-            <Link className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-secondary transition-colors" href="#">Terms</Link>
+            <Link className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-secondary transition-colors" href="/about">About Us</Link>
+            <Link className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-secondary transition-colors" href="/admin/login">Admin Login</Link>
+            <Link className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-secondary transition-colors" href="#">Privacy</Link>
+            <Link className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-secondary transition-colors" href="#">Terms</Link>
           </div>
         </div>
       </footer>
@@ -251,11 +251,11 @@ export default function LandingPage() {
 
 function FeatureCard({ icon, title, description, highlight = false }: { icon: any, title: string, description: string, highlight?: boolean }) {
   return (
-    <div className={`p-8 sm:p-10 rounded-3xl border transition-all duration-300 hover:-translate-y-1 ${highlight ? 'bg-primary/40 border-secondary/30 shadow-2xl shadow-secondary/5' : 'bg-card/30 border-white/5 hover:border-white/10'}`}>
+    <div className={`p-8 sm:p-10 rounded-3xl border transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center sm:items-start sm:text-left ${highlight ? 'bg-primary/40 border-secondary/30 shadow-2xl shadow-secondary/5' : 'bg-card/30 border-white/5 hover:border-white/10'}`}>
       <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary mb-6 sm:mb-8">
         {icon}
       </div>
-      <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-white">{title}</h3>
+      <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-white uppercase italic">{title}</h3>
       <p className="text-muted-foreground leading-relaxed text-sm sm:text-lg">
         {description}
       </p>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useMemo } from "react"
@@ -141,19 +140,19 @@ export default function ResourcesPage() {
   }
 
   return (
-    <div className="space-y-8 sm:space-y-12 animate-in fade-in duration-500 pb-20 px-4 sm:px-0">
+    <div className="space-y-8 sm:space-y-12 animate-in fade-in duration-500 pb-20 px-4 sm:px-0 max-w-6xl mx-auto">
       <section className="relative p-6 sm:p-12 rounded-3xl bg-primary/20 border border-secondary/30 overflow-hidden text-center sm:text-left shadow-2xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-secondary/10 rounded-full blur-3xl opacity-50" />
         <div className="relative z-10 max-w-3xl">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
-            <Badge className="bg-secondary text-white uppercase tracking-widest text-[10px] font-bold">SmartPass Exclusive</Badge>
+            <Badge className="bg-secondary text-white uppercase tracking-widest text-[10px] font-bold py-1 px-3">SmartPass Exclusive</Badge>
             {userData?.isPremium && (
-              <Badge className="bg-amber-500 text-white uppercase tracking-widest text-[10px] font-bold flex items-center gap-1 shadow-lg shadow-amber-500/20">
+              <Badge className="bg-amber-500 text-white uppercase tracking-widest text-[10px] font-bold flex items-center gap-1 shadow-lg shadow-amber-500/20 py-1 px-3">
                 <Crown size={10} /> Global Access Active
               </Badge>
             )}
           </div>
-          <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 italic uppercase tracking-tighter">Study Resources</h1>
+          <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 italic uppercase tracking-tighter text-balance">Study Resources</h1>
           <p className="text-muted-foreground text-base sm:text-xl leading-relaxed">
             Unlock premium PDF booklets via <span className="text-secondary font-bold">Manual EcoCash Transfer</span>. Submit reference code for instant verification.
           </p>
@@ -168,13 +167,13 @@ export default function ResourcesPage() {
             <Loader2 className="h-10 w-10 animate-spin text-secondary" />
           </div>
         ) : resources && resources.length > 0 ? (
-          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
             {resources.map((res) => {
               const owned = hasAccess(res.id)
               const pending = isPending(res.id)
               return (
                 <Card key={res.id} className="flex flex-col sm:flex-row overflow-hidden border-white/5 bg-card/40 backdrop-blur-md group hover:border-secondary/30 transition-all duration-300 shadow-xl">
-                  <div className="relative w-full sm:w-48 h-56 sm:h-auto overflow-hidden">
+                  <div className="relative w-full sm:w-48 h-56 sm:h-auto overflow-hidden shrink-0">
                     <Image 
                       src={res.thumbnailUrl || "https://picsum.photos/seed/booklet/400/600"} 
                       alt={res.title}
@@ -191,12 +190,12 @@ export default function ResourcesPage() {
                   <div className="flex-1 p-6 flex flex-col justify-between space-y-4">
                     <div className="space-y-2">
                       <div className="flex justify-between items-start">
-                        <Badge variant="secondary" className={`text-[9px] h-5 uppercase font-bold tracking-widest ${owned ? 'bg-secondary/10 text-secondary border-secondary/20' : pending ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-muted/10 text-muted-foreground'}`}>
+                        <Badge variant="secondary" className={`text-[9px] h-5 uppercase font-bold tracking-widest px-2 ${owned ? 'bg-secondary/10 text-secondary border-secondary/20' : pending ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-muted/10 text-muted-foreground'}`}>
                           {owned ? "Unlocked" : pending ? "Pending" : "Locked"}
                         </Badge>
                         {!owned && !pending && <span className="text-lg font-bold text-white font-mono hidden sm:inline-block">${res.priceDollars}.00</span>}
                       </div>
-                      <CardTitle className="text-lg sm:text-xl text-white italic font-bold">{res.title}</CardTitle>
+                      <CardTitle className="text-lg sm:text-xl text-white italic font-bold leading-tight">{res.title}</CardTitle>
                       <CardDescription className="text-xs sm:text-sm leading-relaxed line-clamp-2 text-muted-foreground">
                         {res.description}
                       </CardDescription>
@@ -232,94 +231,96 @@ export default function ResourcesPage() {
             })}
           </div>
         ) : (
-          <div className="text-center py-20 text-muted-foreground italic">No study resources found.</div>
+          <div className="text-center py-20 text-muted-foreground italic uppercase tracking-widest font-bold text-[10px]">Zero study resources detected in repository.</div>
         )}
       </div>
 
       <Dialog open={isPaying} onOpenChange={setIsPaying}>
-        <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10 sm:max-w-md w-[95vw] rounded-3xl mx-auto">
-          <DialogHeader>
+        <DialogContent className="bg-card/95 backdrop-blur-xl border-white/10 sm:max-w-md w-[95vw] rounded-3xl mx-auto p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-4 bg-primary/20 border-b border-white/5">
             <DialogTitle className="flex items-center gap-2 text-xl italic uppercase tracking-tighter text-white">
               <Wallet className="text-secondary" /> Manual EcoCash Transfer
             </DialogTitle>
-            <DialogDescription className="text-xs">
-              Direct payment to Admin for: <span className="text-secondary font-bold uppercase">{selectedResource?.title}</span>
+            <DialogDescription className="text-[10px] uppercase font-bold text-muted-foreground">
+              Direct payment to Admin for: <span className="text-secondary">{selectedResource?.title}</span>
             </DialogDescription>
           </DialogHeader>
 
-          {payStep === 'instructions' && (
-            <div className="space-y-6 py-4">
-              <div className="p-5 rounded-2xl bg-primary/40 border border-white/5 space-y-4 shadow-inner">
-                <div className="space-y-1">
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Step 1: Send Funds</p>
-                  <p className="text-sm text-white">Transfer <span className="text-secondary font-bold">${selectedResource?.priceDollars}.00</span> via EcoCash to:</p>
-                </div>
-                
-                <div className="flex items-center justify-between bg-background/60 p-3 rounded-xl border border-white/10">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Admin Number</span>
-                    <span className="text-xl font-mono text-secondary tracking-tighter">{ADMIN_ECOCASH_NUMBER}</span>
+          <div className="p-6">
+            {payStep === 'instructions' && (
+              <div className="space-y-6">
+                <div className="p-5 rounded-2xl bg-primary/40 border border-white/5 space-y-4 shadow-inner">
+                  <div className="space-y-1">
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Step 1: Send Funds</p>
+                    <p className="text-sm text-white">Transfer <span className="text-secondary font-bold font-mono">${selectedResource?.priceDollars}.00</span> via EcoCash to:</p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(ADMIN_ECOCASH_NUMBER)} className="text-muted-foreground hover:text-white">
-                    <Copy size={18} />
-                  </Button>
+                  
+                  <div className="flex items-center justify-between bg-background/60 p-4 rounded-xl border border-white/10">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] text-muted-foreground uppercase font-bold">Admin Number</span>
+                      <span className="text-xl font-mono text-secondary tracking-tighter">{ADMIN_ECOCASH_NUMBER}</span>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => copyToClipboard(ADMIN_ECOCASH_NUMBER)} className="text-muted-foreground hover:text-white h-10 w-10">
+                      <Copy size={20} />
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-3 items-start p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={14} />
+                    <p className="text-[10px] text-amber-500 leading-tight uppercase font-bold">After sending, paste the SMS Reference Code in the next step.</p>
+                  </div>
                 </div>
 
-                <div className="flex gap-3 items-start p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                  <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={14} />
-                  <p className="text-[10px] text-amber-500 leading-tight">After sending, paste the Reference Code in the next step.</p>
-                </div>
-              </div>
-
-              <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={() => setPayStep('submit')}>
-                I have sent the payment <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </div>
-          )}
-
-          {payStep === 'submit' && (
-            <div className="space-y-6 py-4">
-              <div className="space-y-3">
-                <Label htmlFor="reference-code" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">EcoCash Reference Code</Label>
-                <Input 
-                  id="reference-code"
-                  placeholder="e.g. EC240830.1234.H12345"
-                  value={referenceCode}
-                  onChange={(e) => setReferenceCode(e.target.value)}
-                  className="bg-background/50 border-white/10 h-14 text-lg font-mono tracking-wider"
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <Button variant="ghost" className="flex-1 h-12 text-xs font-bold uppercase tracking-widest" onClick={() => setPayStep('instructions')}>Back</Button>
-                <Button className="flex-[2] bg-secondary text-white hover:bg-secondary/90 h-12 text-xs font-bold shadow-xl shadow-secondary/20 uppercase tracking-widest" onClick={handleSubmitReference}>
-                  Submit for Verification
+                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={() => setPayStep('submit')}>
+                  Sent the payment <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {payStep === 'processing' && (
-            <div className="flex flex-col items-center justify-center py-12 space-y-6">
-              <Loader2 className="h-20 w-20 animate-spin text-secondary opacity-30" />
-              <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Submitting Reference...</p>
-            </div>
-          )}
+            {payStep === 'submit' && (
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="reference-code" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Step 2: Reference Verification</Label>
+                  <Input 
+                    id="reference-code"
+                    placeholder="e.g. EC240830.1234.H12345"
+                    value={referenceCode}
+                    onChange={(e) => setReferenceCode(e.target.value)}
+                    className="bg-background/50 border-white/10 h-14 text-lg font-mono tracking-wider placeholder:text-[10px] placeholder:font-sans placeholder:tracking-normal"
+                  />
+                </div>
 
-          {payStep === 'success' && (
-            <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in zoom-in-95">
-              <div className="h-20 w-20 bg-secondary/10 rounded-full flex items-center justify-center text-secondary border-2 border-secondary/30 shadow-2xl shadow-secondary/10">
-                <Clock size={48} className="animate-pulse" />
+                <div className="flex gap-3">
+                  <Button variant="ghost" className="flex-1 h-14 text-[10px] font-bold uppercase tracking-widest border border-white/5" onClick={() => setPayStep('instructions')}>Back</Button>
+                  <Button className="flex-[2] bg-secondary text-white hover:bg-secondary/90 h-14 text-[10px] font-bold shadow-xl shadow-secondary/20 uppercase tracking-widest" onClick={handleSubmitReference}>
+                    Submit Verification
+                  </Button>
+                </div>
               </div>
-              <div className="text-center space-y-2">
-                <p className="font-bold text-white text-2xl italic uppercase tracking-tighter">Reference Submitted</p>
-                <p className="text-sm text-muted-foreground px-4">Admin will verify shortly. Check back in 15 minutes.</p>
+            )}
+
+            {payStep === 'processing' && (
+              <div className="flex flex-col items-center justify-center py-12 space-y-6">
+                <Loader2 className="h-20 w-20 animate-spin text-secondary opacity-30" />
+                <p className="font-bold text-white text-xl italic uppercase tracking-tighter">Submitting Reference...</p>
               </div>
-              <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={() => setIsPaying(false)}>
-                Return to Library <CheckCircle2 className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          )}
+            )}
+
+            {payStep === 'success' && (
+              <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in zoom-in-95">
+                <div className="h-20 w-20 bg-secondary/10 rounded-full flex items-center justify-center text-secondary border-2 border-secondary/30 shadow-2xl shadow-secondary/10">
+                  <Clock size={48} className="animate-pulse" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="font-bold text-white text-2xl italic uppercase tracking-tighter">Reference Submitted</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground px-4">Admin will verify shortly. Check back in 15 minutes.</p>
+                </div>
+                <Button className="w-full bg-secondary text-white font-bold h-14 uppercase tracking-widest text-xs" onClick={() => setIsPaying(false)}>
+                  Return to Library <CheckCircle2 className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

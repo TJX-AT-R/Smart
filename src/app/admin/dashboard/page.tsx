@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -9,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, Database, Wallet, History, ShieldCheck, CheckCircle2, XCircle } from "lucide-react"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, Database, Wallet, History, ShieldCheck, CheckCircle2, XCircle, LogOut } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
@@ -118,27 +117,30 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="text-center sm:text-left">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center justify-center sm:justify-start gap-3 italic uppercase tracking-tighter">
+    <div className="p-4 sm:p-8 space-y-6 sm:space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto pb-20">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-primary/20 p-6 rounded-2xl border border-white/5">
+        <div className="text-center lg:text-left">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center justify-center lg:justify-start gap-3 italic uppercase tracking-tighter">
             <ShieldAlert className="text-destructive size-6 sm:size-8" />
             SmartPass Command
           </h1>
           <p className="text-muted-foreground font-mono text-[10px] uppercase tracking-widest mt-1">Administrator Oversight Portal</p>
         </div>
-        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 sm:gap-4">
-          <div className="hidden lg:flex items-center gap-2 bg-secondary/5 px-4 py-1.5 rounded-full border border-secondary/20">
-            <ShieldCheck size={14} className="text-secondary" />
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Payout Active:</span>
+        
+        <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-2 bg-secondary/5 px-4 py-2 rounded-full border border-secondary/20 w-full sm:w-auto justify-center">
+            <ShieldCheck size={14} className="text-secondary shrink-0" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">Payout:</span>
             <span className="text-[11px] font-mono font-bold text-secondary">{ADMIN_ECOCASH_NUMBER}</span>
           </div>
-          <Badge variant="outline" className="px-3 sm:px-4 py-1 border-destructive/30 text-destructive bg-destructive/5 font-mono text-[9px] sm:text-[10px]">
-            {user?.email === getAdminEmail() ? "ROOT ACCESS ACTIVE" : "ADMIN ROLE ACTIVE"}
-          </Badge>
-          <Button variant="outline" onClick={() => router.push("/")} size="sm" className="border-white/10 hover:bg-white/5 text-[10px] h-8 sm:h-9">
-            Exit to Site
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Badge variant="outline" className="flex-1 sm:flex-none px-3 py-1.5 border-destructive/30 text-destructive bg-destructive/5 font-mono text-[9px] uppercase tracking-widest flex justify-center items-center">
+              {user?.email === getAdminEmail() ? "ROOT ACCESS" : "ADMIN ROLE"}
+            </Badge>
+            <Button variant="outline" onClick={() => router.push("/")} size="sm" className="flex-1 sm:flex-none border-white/10 hover:bg-white/5 text-[10px] h-9 font-bold uppercase tracking-widest">
+              Exit <LogOut size={12} className="ml-2" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -169,9 +171,9 @@ export default function AdminDashboardPage() {
 
         <Card className="bg-primary/40 border-white/5 shadow-xl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-amber-500">
               <History size={12} className="text-amber-500" />
-              Pending Verification
+              Pending Actions
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -183,18 +185,18 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
               <Database size={12} className="text-secondary" />
-              Repository Controls
+              Global Controls
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="secondary" size="sm" className="w-full text-[10px] h-7 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
+          <CardContent className="grid grid-cols-2 sm:grid-cols-1 gap-2">
+            <Button variant="secondary" size="sm" className="w-full text-[9px] h-8 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
               <Link href="/admin/questions">
-                Theory Bank <ArrowRight size={10} className="ml-1" />
+                Theory Bank
               </Link>
             </Button>
-            <Button variant="secondary" size="sm" className="w-full text-[10px] h-7 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
+            <Button variant="secondary" size="sm" className="w-full text-[9px] h-8 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
               <Link href="/admin/resources">
-                Study Library <ArrowRight size={10} className="ml-1" />
+                Library
               </Link>
             </Button>
           </CardContent>
@@ -202,45 +204,45 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
-        <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden flex flex-col shadow-2xl">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 bg-primary/10">
             <div>
-              <CardTitle className="text-base sm:text-lg italic uppercase tracking-tighter">EcoCash Activity</CardTitle>
-              <CardDescription className="text-[10px]">Verify incoming reference codes.</CardDescription>
+              <CardTitle className="text-base sm:text-lg italic uppercase tracking-tighter">EcoCash Registry</CardTitle>
+              <CardDescription className="text-[9px] uppercase font-bold text-muted-foreground">Verify incoming reference codes.</CardDescription>
             </div>
-            <History size={16} className="text-muted-foreground" />
+            <History size={16} className="text-secondary" />
           </CardHeader>
-          <CardContent className="px-0 sm:px-6">
+          <CardContent className="px-0 flex-1">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Reference / Resource</TableHead>
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Status</TableHead>
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground text-right">Action</TableHead>
+                    <TableHead className="text-[9px] uppercase font-bold text-muted-foreground pl-6">Reference / Resource</TableHead>
+                    <TableHead className="text-[9px] uppercase font-bold text-muted-foreground">Status</TableHead>
+                    <TableHead className="text-[9px] uppercase font-bold text-muted-foreground text-right pr-6">Control</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isTxLoading ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8">
-                        <Loader2 className="h-4 w-4 animate-spin mx-auto text-secondary" />
+                      <TableCell colSpan={3} className="text-center py-12">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-secondary" />
                       </TableCell>
                     </TableRow>
                   ) : transactions?.length ? (
                     transactions.map((tx) => (
-                      <TableRow key={tx.id} className="border-white/5">
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-white font-mono">{tx.transactionId}</span>
+                      <TableRow key={tx.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                        <TableCell className="pl-6">
+                          <div className="flex flex-col py-1">
+                            <span className="text-[10px] font-bold text-white font-mono tracking-wider">{tx.transactionId}</span>
                             <span className="text-[9px] text-muted-foreground italic mt-0.5">{tx.resourceTitle || "Study Booklet"}</span>
-                            <span className="text-[8px] text-muted-foreground/60 font-mono">{tx.userEmail}</span>
+                            <span className="text-[8px] text-muted-foreground/60 font-mono mt-0.5">{tx.userEmail}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge 
                             variant="outline" 
-                            className={`text-[8px] uppercase font-bold tracking-widest ${
+                            className={`text-[8px] uppercase font-bold tracking-widest px-2 py-0.5 ${
                               tx.status === 'verified' ? 'border-secondary/30 text-secondary bg-secondary/5' : 
                               tx.status === 'pending' ? 'border-amber-500/30 text-amber-500 bg-amber-500/5' : 
                               'border-destructive/30 text-destructive bg-destructive/5'
@@ -249,30 +251,30 @@ export default function AdminDashboardPage() {
                             {tx.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right pr-6">
                           {tx.status === 'pending' ? (
                             <div className="flex items-center justify-end gap-1">
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-7 w-7 text-secondary hover:bg-secondary/10"
+                                className="h-8 w-8 text-secondary hover:bg-secondary/10"
                                 onClick={() => handleVerifyPurchase(tx, 'verified')}
                                 disabled={verifyingId === tx.id}
                               >
-                                <CheckCircle2 size={14} />
+                                <CheckCircle2 size={16} />
                               </Button>
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                 onClick={() => handleVerifyPurchase(tx, 'rejected')}
                                 disabled={verifyingId === tx.id}
                               >
-                                <XCircle size={14} />
+                                <XCircle size={16} />
                               </Button>
                             </div>
                           ) : (
-                            <span className="text-[9px] text-muted-foreground font-mono">
+                            <span className="text-[9px] text-muted-foreground font-mono bg-white/5 px-2 py-1 rounded">
                               {tx.verifiedAt ? format(new Date(tx.verifiedAt.toDate()), "MMM d, HH:mm") : 'Done'}
                             </span>
                           )}
@@ -281,8 +283,8 @@ export default function AdminDashboardPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground text-[10px] uppercase tracking-widest">
-                        Zero Activity
+                      <TableCell colSpan={3} className="text-center py-12 text-muted-foreground text-[10px] uppercase tracking-widest font-bold">
+                        Zero Records
                       </TableCell>
                     </TableRow>
                   )}
@@ -292,55 +294,55 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden flex flex-col">
-          <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden flex flex-col shadow-2xl">
+          <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 bg-primary/10">
             <div>
               <CardTitle className="text-base sm:text-lg italic uppercase tracking-tighter">Learner Registry</CardTitle>
-              <CardDescription className="text-[10px]">Track engagement and mastery.</CardDescription>
+              <CardDescription className="text-[9px] uppercase font-bold text-muted-foreground">Mastery and Engagement tracking.</CardDescription>
             </div>
             <div className="relative w-full md:w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input 
                 placeholder="Search Database..." 
-                className="w-full pl-9 h-9 bg-background/50 border border-white/10 rounded-lg text-[10px] sm:text-xs outline-none focus:ring-1 focus:ring-secondary/50 placeholder:text-muted-foreground/50"
+                className="w-full pl-9 h-9 bg-background/50 border border-white/10 rounded-lg text-[10px] sm:text-xs outline-none focus:ring-1 focus:ring-secondary/50 placeholder:text-muted-foreground/50 transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </CardHeader>
-          <CardContent className="px-0 sm:px-6 flex-1">
+          <CardContent className="px-0 flex-1">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/5 hover:bg-transparent">
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground">Learner</TableHead>
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground hidden sm:table-cell">Joined</TableHead>
-                    <TableHead className="text-[9px] sm:text-[10px] uppercase font-bold text-muted-foreground text-right">Action</TableHead>
+                    <TableHead className="text-[9px] uppercase font-bold text-muted-foreground pl-6">Learner Profile</TableHead>
+                    <TableHead className="text-[9px] uppercase font-bold text-muted-foreground hidden sm:table-cell">Enlisted</TableHead>
+                    <TableHead className="text-[9px] uppercase font-bold text-muted-foreground text-right pr-6">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isUsersLoading ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8">
-                        <Loader2 className="h-4 w-4 animate-spin mx-auto text-secondary" />
+                      <TableCell colSpan={3} className="text-center py-12">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-secondary" />
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers.length > 0 ? (
                     filteredUsers.map((learner) => (
                       <TableRow key={learner.id} className="border-white/5 hover:bg-white/5 transition-colors">
-                        <TableCell className="font-medium text-white">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] sm:text-xs font-bold">{learner.firstName} {learner.lastName}</span>
-                            <span className="text-[9px] text-muted-foreground font-mono">{learner.email}</span>
+                        <TableCell className="pl-6">
+                          <div className="flex flex-col py-1">
+                            <span className="text-[10px] sm:text-xs font-bold text-white">{learner.firstName} {learner.lastName}</span>
+                            <span className="text-[9px] text-muted-foreground font-mono mt-0.5">{learner.email}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-[10px] font-mono hidden sm:table-cell">
                           {format(new Date(learner.registrationDate), "MMM d, yyyy")}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" className="hover:bg-secondary/10 hover:text-secondary h-7 text-[9px] font-bold uppercase tracking-widest" asChild>
+                        <TableCell className="text-right pr-6">
+                          <Button variant="ghost" size="sm" className="hover:bg-secondary/10 hover:text-secondary h-8 px-4 text-[9px] font-bold uppercase tracking-widest border border-white/5" asChild>
                             <Link href={`/admin/users/${learner.id}`}>
-                              Profile
+                              Oversight
                             </Link>
                           </Button>
                         </TableCell>
@@ -348,8 +350,8 @@ export default function AdminDashboardPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground text-[10px] uppercase tracking-widest">
-                        No Records Found
+                      <TableCell colSpan={3} className="text-center py-12 text-muted-foreground text-[10px] uppercase tracking-widest font-bold">
+                        Zero Matches
                       </TableCell>
                     </TableRow>
                   )}

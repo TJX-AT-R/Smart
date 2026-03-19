@@ -320,24 +320,24 @@ export default function MockTestPage() {
 
         <Card className="w-full max-w-lg border-white/5 bg-card/30 backdrop-blur-xl shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-white uppercase tracking-widest text-xs">Test Rules</CardTitle>
+            <CardTitle className="text-lg font-bold text-white uppercase tracking-widest text-[10px]">Test Rules</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm sm:text-base">
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-1" size={16} />
-              <span className="text-muted-foreground">Pass mark is <span className="text-white font-bold">{passThresholdPercent}%</span> (23 out of 25)</span>
+              <span className="text-muted-foreground leading-relaxed">Pass mark is <span className="text-white font-bold">{passThresholdPercent}%</span> (23 out of 25)</span>
             </div>
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-1" size={16} />
-              <span className="text-muted-foreground">Each question has multiple choices</span>
+              <span className="text-muted-foreground leading-relaxed">Each question has multiple choices</span>
             </div>
             <div className="flex gap-3 items-start">
               <CheckCircle2 className="text-secondary shrink-0 mt-1" size={16} />
-              <span className="text-muted-foreground">Results are saved automatically for your coach.</span>
+              <span className="text-muted-foreground leading-relaxed">Results are saved automatically for your coach.</span>
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20" onClick={startTest}>
+            <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={startTest}>
               Start Exam Now
             </Button>
           </CardFooter>
@@ -354,7 +354,7 @@ export default function MockTestPage() {
       <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12 animate-in zoom-in-95 duration-500">
         <Card className="shadow-2xl border-none overflow-hidden bg-card/50 backdrop-blur-xl relative">
           <div className={`absolute top-0 left-0 w-full h-2 ${passed ? 'bg-secondary' : 'bg-destructive'}`} />
-          <CardHeader className="text-center space-y-6 pt-10">
+          <CardHeader className="text-center space-y-6 pt-10 px-4">
             <div className={`mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center border-4 ${passed ? 'border-secondary/30 bg-secondary/10' : 'border-destructive/30 bg-destructive/10'}`}>
               {passed ? <Trophy className="text-secondary" size={40} /> : <AlertCircle className="text-destructive" size={40} />}
             </div>
@@ -365,7 +365,7 @@ export default function MockTestPage() {
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="space-y-8">
+          <CardContent className="space-y-8 px-4 sm:px-10">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-primary/20 border border-white/5 text-center">
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">Percentage</p>
@@ -381,11 +381,11 @@ export default function MockTestPage() {
 
             <div className="space-y-3">
               <div className="flex justify-between items-center text-xs sm:text-sm p-4 rounded-xl bg-background/30 border border-white/5">
-                <span className="text-muted-foreground uppercase font-bold tracking-widest">Requirement</span>
+                <span className="text-muted-foreground uppercase font-bold tracking-widest text-[10px]">Requirement</span>
                 <span className="font-bold text-white">23 Correct</span>
               </div>
               <div className="flex justify-between items-center text-xs sm:text-sm p-4 rounded-xl bg-background/30 border border-white/5">
-                <span className="text-muted-foreground uppercase font-bold tracking-widest">Completion Time</span>
+                <span className="text-muted-foreground uppercase font-bold tracking-widest text-[10px]">Completion Time</span>
                 <span className="font-bold text-white font-mono">{formatTime(initialTime - timeLeft)}</span>
               </div>
               {isSaving && (
@@ -396,11 +396,11 @@ export default function MockTestPage() {
               )}
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-3 pb-8">
-            <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-12 font-bold" onClick={startTest}>
+          <CardFooter className="flex flex-col gap-3 pb-8 px-4 sm:px-10">
+            <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 font-bold uppercase tracking-widest text-xs" onClick={startTest}>
               <RotateCcw className="mr-2 h-4 w-4" /> Restart Simulation
             </Button>
-            <Button variant="ghost" className="w-full h-12 text-muted-foreground hover:text-white" onClick={() => router.push('/dashboard')}>
+            <Button variant="ghost" className="w-full h-12 text-muted-foreground hover:text-white uppercase font-bold tracking-widest text-[10px]" onClick={() => router.push('/dashboard')}>
               Return to Command Center
             </Button>
           </CardFooter>
@@ -420,16 +420,16 @@ export default function MockTestPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-[72px] z-30 bg-background/60 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-white/10 shadow-xl">
         <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-colors ${timeLeft < 60 ? 'border-destructive text-destructive animate-pulse bg-destructive/5' : 'border-secondary/20 text-secondary bg-secondary/5'}`}>
-            <Timer size={18} className="sm:size-20" />
+            <Timer size={18} className="shrink-0" />
             <span className="text-lg sm:text-xl font-mono font-bold tracking-tighter">{formatTime(timeLeft)}</span>
           </div>
-          <div className="text-xs sm:text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">
             Step <span className="text-white">{currentIndex + 1}</span> / {totalQuestions}
           </div>
         </div>
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          <Progress value={progress} className="h-2 flex-1 sm:w-48 bg-white/5" />
-          <Button variant="destructive" size="sm" onClick={() => setIsFinished(true)} className="bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border-destructive/20 text-[10px] font-bold uppercase tracking-widest h-9">
+          <Progress value={progress} className="h-1.5 flex-1 sm:w-48 bg-white/5" />
+          <Button variant="destructive" size="sm" onClick={() => setIsFinished(true)} className="bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border-destructive/20 text-[10px] font-bold uppercase tracking-widest h-9 px-4 shrink-0">
             Abort
           </Button>
         </div>
@@ -439,20 +439,17 @@ export default function MockTestPage() {
         <Card className="lg:col-span-5 shadow-2xl border-white/5 bg-card/30 backdrop-blur-md overflow-hidden flex flex-col relative">
           {isAdmin && (
             <div className="absolute top-4 right-4 z-20 flex gap-2">
-              <Button variant="ghost" size="icon" className="bg-primary/20 hover:bg-primary/40 text-secondary border border-secondary/20" onClick={handleOpenEdit}>
-                <Pencil size={16} />
+              <Button variant="ghost" size="icon" className="bg-primary/20 hover:bg-primary/40 text-secondary border border-secondary/20 h-8 w-8" onClick={handleOpenEdit}>
+                <Pencil size={14} />
               </Button>
-              <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20" onClick={handleDeleteQuestion}>
-                <Trash2 size={16} />
+              <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 h-8 w-8" onClick={handleDeleteQuestion}>
+                <Trash2 size={14} />
               </Button>
-              <Badge variant="outline" className="bg-destructive/5 text-destructive border-destructive/20 text-[8px] uppercase tracking-widest h-6">
-                <ShieldAlert size={10} className="mr-1" /> Admin mode
-              </Badge>
             </div>
           )}
           <CardHeader className="p-6 sm:p-10 pb-4">
-            <Badge variant="outline" className="mb-4 w-fit border-secondary/30 text-secondary text-[10px] font-bold tracking-widest uppercase">{currentQuestion.category}</Badge>
-            <CardTitle className="text-xl sm:text-2xl font-bold leading-tight text-white mb-6 pr-24">
+            <Badge variant="outline" className="mb-4 w-fit border-secondary/30 text-secondary text-[10px] font-bold tracking-widest uppercase italic">{currentQuestion.category}</Badge>
+            <CardTitle className="text-xl sm:text-2xl font-bold leading-tight text-white mb-6 pr-12 sm:pr-24 text-balance">
               {currentQuestion.text}
             </CardTitle>
             {currentQuestion.imageUrl && (
@@ -483,7 +480,7 @@ export default function MockTestPage() {
                   `}
                 >
                   <div className={`
-                    w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-base sm:text-lg shrink-0 transition-colors
+                    w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-xs sm:text-lg shrink-0 transition-colors
                     ${isSelected ? 'bg-secondary text-white' : 'bg-muted/50 text-muted-foreground group-hover:bg-muted'}
                   `}>
                     {label}
@@ -496,17 +493,17 @@ export default function MockTestPage() {
               )
             })}
           </CardContent>
-          <CardFooter className="p-6 sm:p-8 bg-muted/5 flex justify-between border-t border-white/5">
+          <CardFooter className="p-6 sm:p-8 bg-muted/5 flex justify-between border-t border-white/5 gap-4">
             <Button 
               variant="outline" 
               onClick={prevQuestion} 
               disabled={currentIndex === 0}
-              className="border-white/10 hover:bg-white/5 h-11 px-6 font-bold uppercase tracking-widest text-[10px]"
+              className="border-white/10 hover:bg-white/5 h-12 flex-1 sm:flex-none px-6 font-bold uppercase tracking-widest text-[10px]"
             >
               <ChevronLeft className="mr-1 h-3 w-3" /> Back
             </Button>
             <Button 
-              className="bg-secondary text-white hover:bg-secondary/90 min-w-[120px] h-11 px-6 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-secondary/20" 
+              className="bg-secondary text-white hover:bg-secondary/90 flex-1 sm:flex-none min-w-[120px] h-12 px-6 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-secondary/20" 
               onClick={nextQuestion}
             >
               {currentIndex === totalQuestions - 1 ? 'Finish' : 'Next'}
@@ -515,12 +512,12 @@ export default function MockTestPage() {
           </CardFooter>
         </Card>
 
-        <Card className="lg:col-span-2 border-white/5 bg-card/30 backdrop-blur-sm h-fit sticky top-48">
+        <Card className="lg:col-span-2 border-white/5 bg-card/30 backdrop-blur-sm h-fit lg:sticky lg:top-48">
           <CardHeader className="pb-4">
             <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Navigation Map</CardTitle>
           </CardHeader>
-          <CardContent className="pb-4">
-            <div className="grid grid-cols-5 gap-2">
+          <CardContent className="pb-4 px-4">
+            <div className="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-2">
               {userAnswers.map((answer, i) => (
                 <button
                   key={i}
@@ -536,7 +533,7 @@ export default function MockTestPage() {
               ))}
             </div>
           </CardContent>
-          <CardFooter className="flex flex-row sm:flex-col items-center sm:items-start gap-4 border-t border-white/5 pt-4">
+          <CardFooter className="flex flex-row sm:flex-col items-center sm:items-start gap-4 border-t border-white/5 pt-4 px-4">
             <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
               <div className="w-2 h-2 sm:w-3 sm:h-3 bg-secondary rounded-sm" />
               <span>Locked</span>
@@ -556,13 +553,13 @@ export default function MockTestPage() {
             <DialogTitle className="italic uppercase tracking-tighter text-xl">Quick Edit Scenario</DialogTitle>
             <DialogDescription className="text-[10px] uppercase font-bold text-secondary">Synchronize repository updates from mock session.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 py-6">
+          <div className="space-y-6 py-6 px-1">
             <div className="space-y-2">
               <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Scenario Question Text</Label>
               <Input 
                 value={editForm.text}
                 onChange={(e) => setEditForm({...editForm, text: e.target.value})}
-                className="bg-background/50 border-white/10"
+                className="bg-background/50 border-white/10 h-12"
               />
             </div>
             
@@ -570,14 +567,14 @@ export default function MockTestPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</Label>
-                  <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60" />
+                  <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60 h-12" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Diagram URL (Manual)</Label>
                   <Input 
                     value={editForm.imageUrl}
                     onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
-                    className="bg-background/50 border-white/10"
+                    className="bg-background/50 border-white/10 h-12"
                   />
                 </div>
               </div>
@@ -631,7 +628,7 @@ export default function MockTestPage() {
               <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Options</Label>
               <div className="grid gap-3">
                 {editForm.options.map((opt, i) => (
-                  <div key={i} className="flex gap-2">
+                  <div key={i} className="flex flex-col sm:flex-row gap-2">
                     <Input 
                       value={opt}
                       onChange={(e) => {
@@ -639,14 +636,14 @@ export default function MockTestPage() {
                         opts[i] = e.target.value
                         setEditForm({...editForm, options: opts})
                       }}
-                      className={`flex-1 bg-background/50 border-white/10 ${editForm.correctAnswer === opt ? 'border-secondary' : ''}`}
+                      className={`flex-1 bg-background/50 border-white/10 h-12 ${editForm.correctAnswer === opt ? 'border-secondary ring-1 ring-secondary/30' : ''}`}
                     />
                     <Button 
                       variant={editForm.correctAnswer === opt ? "secondary" : "outline"}
-                      className="text-[10px] uppercase font-bold"
+                      className="text-[10px] uppercase font-bold h-12 sm:w-32"
                       onClick={() => setEditForm({...editForm, correctAnswer: opt})}
                     >
-                      Correct
+                      {editForm.correctAnswer === opt ? "Correct Path" : "Mark Correct"}
                     </Button>
                   </div>
                 ))}
@@ -661,8 +658,8 @@ export default function MockTestPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={handleSaveEdit} disabled={isSavingEdit || uploadProgress !== null}>
+          <DialogFooter className="px-1">
+            <Button className="w-full bg-secondary text-white font-bold h-14 uppercase tracking-widest text-xs shadow-xl shadow-secondary/20" onClick={handleSaveEdit} disabled={isSavingEdit || uploadProgress !== null}>
               {isSavingEdit ? <Loader2 className="animate-spin mr-2" /> : "Sync Changes"}
             </Button>
           </DialogFooter>
