@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -277,7 +276,7 @@ export default function MockTestPage() {
       <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-8 space-y-8 animate-in fade-in duration-500">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-secondary/20 rounded-full flex items-center justify-center mx-auto text-secondary mb-6 shadow-lg shadow-secondary/10">
-            <Timer size={40} className="sm:size-48" />
+            <Timer size={40} />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight uppercase italic text-shadow-sm">Official Mock Test</h1>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">

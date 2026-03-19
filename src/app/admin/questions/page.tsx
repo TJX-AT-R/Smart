@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -140,7 +139,7 @@ export default function AdminQuestionsPage() {
   }
 
   const handleDeleteQuestion = async (id: string) => {
-    if (!db) return
+    if (!db || !confirm("Are you sure you want to permanently delete this question?")) return
     setIsDeleting(id)
     try {
       await deleteDoc(doc(db, "questions", id))
@@ -241,7 +240,7 @@ export default function AdminQuestionsPage() {
                   <div className="space-y-2">
                     <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Diagram URL</Label>
                     <Input 
-                      placeholder="https://images.unsplash.com/..." 
+                      placeholder="https://picsum.photos/..." 
                       value={questionForm.imageUrl}
                       onChange={(e) => setQuestionForm({...questionForm, imageUrl: e.target.value})}
                       className="bg-background/50 border-white/10 h-12"
