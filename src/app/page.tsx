@@ -1,8 +1,10 @@
+
 "use client"
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info, ArrowRight } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info, ArrowRight, Sparkles, Zap, Search } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser, useAuth } from "@/firebase"
@@ -79,65 +81,30 @@ export default function LandingPage() {
                 <SheetDescription>Access site features and account settings.</SheetDescription>
               </SheetHeader>
               <nav className="flex flex-col gap-6 mt-12">
-                <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
-                  href="/about"
-                  onClick={() => setIsOpen(false)}
-                >
+                <Link className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" href="/about" onClick={() => setIsOpen(false)}>
                   <Info size={24} className="text-secondary" /> About Us
                 </Link>
-                <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
-                  href="/practice"
-                  onClick={() => setIsOpen(false)}
-                >
+                <Link className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" href="/practice" onClick={() => setIsOpen(false)}>
                   <BookOpen size={24} className="text-secondary" /> Practice Bank
                 </Link>
-                <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
-                  href="/mock-test"
-                  onClick={() => setIsOpen(false)}
-                >
+                <Link className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" href="/mock-test" onClick={() => setIsOpen(false)}>
                   <ClipboardCheck size={24} className="text-secondary" /> Mock Tests
                 </Link>
-                <Link 
-                  className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" 
-                  href="/resources"
-                  onClick={() => setIsOpen(false)}
-                >
+                <Link className="text-2xl font-semibold text-white hover:text-secondary transition-colors flex items-center gap-4" href="/resources" onClick={() => setIsOpen(false)}>
                   <ShieldCheck size={24} className="text-secondary" /> Study Resources
                 </Link>
                 {!user ? (
                   <>
-                    <Link 
-                      className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
-                      href="/login"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Login
-                    </Link>
-                    <Link 
-                      className="text-2xl font-semibold text-white hover:text-secondary transition-colors" 
-                      href="/login?tab=signup"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
+                    <Link className="text-2xl font-semibold text-white hover:text-secondary transition-colors" href="/login" onClick={() => setIsOpen(false)}>Login</Link>
+                    <Link className="text-2xl font-semibold text-white hover:text-secondary transition-colors" href="/login?tab=signup" onClick={() => setIsOpen(false)}>Sign Up</Link>
                   </>
                 ) : (
-                  <button 
-                    className="text-2xl font-semibold text-left text-white hover:text-secondary transition-colors flex items-center gap-4" 
-                    onClick={handleLogout}
-                  >
+                  <button className="text-2xl font-semibold text-left text-white hover:text-secondary transition-colors flex items-center gap-4" onClick={handleLogout}>
                     <LogOut size={24} className="text-secondary" /> Logout
                   </button>
                 )}
                 <div className="border-t border-white/10 pt-6">
-                  <Link 
-                    className="text-xl font-medium text-destructive hover:text-destructive/80 transition-colors flex items-center gap-2" 
-                    href="/admin/login"
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <Link className="text-xl font-medium text-destructive hover:text-destructive/80 transition-colors flex items-center gap-2" href="/admin/login" onClick={() => setIsOpen(false)}>
                     <ShieldAlert size={20} /> Admin Portal
                   </Link>
                 </div>
@@ -200,7 +167,40 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-20 sm:py-32 relative bg-primary/10">
+        {/* AI Sign Explorer Preview */}
+        <section className="py-24 bg-primary/20 border-y border-white/5 relative overflow-hidden">
+          <div className="container mx-auto px-4 sm:px-6 relative z-10">
+            <div className="max-w-4xl mx-auto bg-card/40 backdrop-blur-2xl p-8 sm:p-12 rounded-[40px] border border-secondary/20 shadow-2xl">
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                <div className="space-y-6 text-center lg:text-left">
+                  <Badge className="bg-secondary/10 text-secondary border-secondary/30 px-4 py-1 uppercase tracking-widest text-[10px] font-bold">SmartPass AI Alpha</Badge>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white italic uppercase tracking-tighter">AI Road Sign <span className="text-secondary">Decoder</span></h2>
+                  <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                    Struggling with complex road signs? Upload any diagram and our high-performance AI coach will provide a detailed, official explanation instantly.
+                  </p>
+                  <Button asChild variant="secondary" size="lg" className="h-14 px-8 font-bold uppercase tracking-widest text-xs">
+                    <Link href="/login" className="flex items-center gap-2">Try AI Decoder Now <Sparkles size={16} /></Link>
+                  </Button>
+                </div>
+                <div className="relative group">
+                  <div className="aspect-square bg-background/60 rounded-3xl border-2 border-dashed border-secondary/30 flex flex-col items-center justify-center p-8 text-center gap-4 group-hover:border-secondary transition-all">
+                    <div className="w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
+                      <Zap size={40} className="animate-pulse" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-white font-bold uppercase italic text-sm tracking-tighter">Instant Recognition</p>
+                      <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold">Upload & Explain</p>
+                    </div>
+                    <div className="absolute -top-4 -right-4 bg-secondary text-primary font-bold text-[10px] px-3 py-1 rounded-full shadow-lg">99.8% ACCURACY</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-secondary/5 blur-[150px] rounded-full -z-10" />
+        </section>
+
+        <section id="features" className="w-full py-20 sm:py-32 relative">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center space-y-4 mb-12 sm:mb-20">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter text-white italic uppercase">Advanced Learning</h2>

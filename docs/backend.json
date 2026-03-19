@@ -20,6 +20,21 @@
       },
       "required": ["id", "email", "firstName", "lastName", "registrationDate"]
     },
+    "Lesson": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Lesson",
+      "type": "object",
+      "description": "A dynamic theory module with visuals.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "updatedAt": { "type": "object" }
+      },
+      "required": ["id", "title"]
+    },
     "Question": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Question",
@@ -123,6 +138,14 @@
           "entityName": "User",
           "schema": { "$ref": "#/backend/entities/User" },
           "description": "Root learner profiles."
+        }
+      },
+      {
+        "path": "/lessons/{lessonId}",
+        "definition": {
+          "entityName": "Lesson",
+          "schema": { "$ref": "#/backend/entities/Lesson" },
+          "description": "Global theory content with diagrams."
         }
       },
       {

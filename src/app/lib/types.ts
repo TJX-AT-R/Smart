@@ -6,6 +6,7 @@ export interface Question {
   correctAnswer: string;
   category: string;
   imageUrl?: string;
+  explanation?: string;
 }
 
 export interface LessonModule {
@@ -15,6 +16,8 @@ export interface LessonModule {
   icon: string;
   content: string;
   progress: number;
+  imageUrl?: string;
+  aiExplanation?: string;
 }
 
 export interface StudyResource {
