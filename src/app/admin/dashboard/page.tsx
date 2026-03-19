@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Search, Loader2, ArrowRight, ShieldAlert, Database, Wallet, History, ShieldCheck, CheckCircle2, XCircle } from "lucide-react"
+import { Users, Search, Loader2, ArrowRight, ShieldAlert, Database, Wallet, History, ShieldCheck, CheckCircle2, XCircle, Download } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
@@ -172,13 +172,18 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-muted-foreground">
               <Database size={12} className="text-secondary" />
-              Content Management
+              Content Controls
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="secondary" size="sm" className="w-full text-[10px] h-7 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
               <Link href="/admin/questions">
-                Manage Repository <ArrowRight size={10} className="ml-1" />
+                Theory Repository <ArrowRight size={10} className="ml-1" />
+              </Link>
+            </Button>
+            <Button variant="secondary" size="sm" className="w-full text-[10px] h-7 bg-secondary/10 text-secondary hover:bg-secondary/20 font-bold uppercase tracking-widest" asChild>
+              <Link href="/admin/resources">
+                Study Library <ArrowRight size={10} className="ml-1" />
               </Link>
             </Button>
           </CardContent>

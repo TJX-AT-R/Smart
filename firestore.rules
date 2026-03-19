@@ -29,6 +29,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /studyResources/{resourceId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
     // Root level purchase records for easy admin access
     match /purchases/{purchaseId} {
       allow read: if isAdmin();

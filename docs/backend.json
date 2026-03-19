@@ -36,6 +36,22 @@
       },
       "required": ["id", "text", "category", "options", "correctAnswer"]
     },
+    "StudyResource": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudyResource",
+      "type": "object",
+      "description": "A premium study booklet available for purchase.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "priceDollars": { "type": "number" },
+        "downloadUrl": { "type": "string" },
+        "thumbnailUrl": { "type": "string" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["id", "title", "priceDollars", "downloadUrl"]
+    },
     "Purchase": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Purchase",
@@ -109,6 +125,14 @@
           "entityName": "Question",
           "schema": { "$ref": "#/backend/entities/Question" },
           "description": "Global theory repository."
+        }
+      },
+      {
+        "path": "/studyResources/{resourceId}",
+        "definition": {
+          "entityName": "StudyResource",
+          "schema": { "$ref": "#/backend/entities/StudyResource" },
+          "description": "Downloadable booklet library."
         }
       },
       {

@@ -3,18 +3,12 @@
 
 import { useState, useRef, useMemo } from "react"
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from "@/firebase"
-import { MOCK_RESOURCES } from "../lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Download, ShoppingCart, Sparkles, CheckCircle2, Loader2, Wallet, ArrowRight, ShieldCheck, Crown, Clock, Copy, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel"
 import {
   Dialog,
   DialogContent,
@@ -25,8 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Autoplay from "embla-carousel-autoplay"
-import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore"
+import { doc, setDoc, collection, serverTimestamp, query, orderBy } from "firebase/firestore"
 
 const ADMIN_ECOCASH_NUMBER = "0789269145"
 
@@ -41,19 +34,22 @@ export default function ResourcesPage() {
   const [referenceCode, setReferenceCode] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  const plugin = useRef(Autoplay({ delay: 3000, stopOnInteraction: true }))
-
   const userDocRef = useMemoFirebase(() => {
     if (!db || !user) return null
     return doc(db, "users", user.uid)
   }, [db, user])
   const { data: userData } = useDoc(userDocRef)
 
+  const resourcesQuery = useMemoFirebase(() => {
+    if (!db) return null
+    return query(collection(db, "studyResources"), orderBy("createdAt", "desc"))
+  }, [db])
+  const { data: resources, isLoading: isResourcesLoading } = useCollection(resourcesQuery)
+
   const purchasesQuery = useMemoFirebase(() => {
     if (!db || !user) return null
     return collection(db, "users", user.uid, "purchases")
   }, [db, user])
-
   const { data: userPurchases } = useCollection(purchasesQuery)
 
   const hasAccess = (resourceId: string) => {
@@ -106,7 +102,6 @@ export default function ResourcesPage() {
         createdAt: serverTimestamp()
       }
 
-      // Save to user sub-collection and root collection for admin visibility
       await setDoc(userPurchaseRef, purchaseData)
       await setDoc(globalPurchaseRef, purchaseData)
       
@@ -124,11 +119,16 @@ export default function ResourcesPage() {
     toast({ title: "Copied!", description: "Number copied to clipboard." })
   }
 
-  const handleDownload = (title: string) => {
-    toast({
-      title: "Download Initiated",
-      description: `Preparing your high-definition copy of "${title}"...`,
-    })
+  const handleDownload = (res: any) => {
+    if (res.downloadUrl) {
+      window.open(res.downloadUrl, '_blank')
+      toast({
+        title: "Download Initiated",
+        description: `Your copy of "${res.title}" is opening in a new tab.`,
+      })
+    } else {
+      toast({ variant: "destructive", title: "Link Error", description: "The download link for this resource is currently unavailable." })
+    }
   }
 
   return (
@@ -153,69 +153,78 @@ export default function ResourcesPage() {
 
       <div className="space-y-6">
         <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight px-2 uppercase italic">Booklet Library</h2>
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-          {MOCK_RESOURCES.map((res) => {
-            const owned = hasAccess(res.id)
-            const pending = isPending(res.id)
-            return (
-              <Card key={res.id} className="flex flex-col sm:flex-row overflow-hidden border-white/5 bg-card/40 backdrop-blur-md group hover:border-secondary/30 transition-all duration-300 shadow-xl">
-                <div className="relative w-full sm:w-48 h-56 sm:h-auto overflow-hidden">
-                  <Image 
-                    src={res.thumbnailUrl} 
-                    alt={res.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  {!owned && !pending && (
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center sm:hidden">
-                       <Badge className="bg-primary/80 text-white font-mono">$5.00</Badge>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 p-6 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <Badge variant="secondary" className={`text-[9px] h-5 uppercase font-bold tracking-widest ${owned ? 'bg-secondary/10 text-secondary border-secondary/20' : pending ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-muted/10 text-muted-foreground'}`}>
-                        {owned ? "Unlocked" : pending ? "Pending Verification" : "Locked"}
-                      </Badge>
-                      {!owned && !pending && <span className="text-lg font-bold text-white font-mono hidden sm:inline-block">${res.priceDollars}.00</span>}
-                    </div>
-                    <CardTitle className="text-lg sm:text-xl text-white italic font-bold">{res.title}</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm leading-relaxed line-clamp-2 text-muted-foreground">
-                      {res.description}
-                    </CardDescription>
-                  </div>
-
-                  <div className="pt-2">
-                    {owned ? (
-                      <Button 
-                        onClick={() => handleDownload(res.title)}
-                        className="w-full bg-secondary text-white hover:bg-secondary/90 h-12 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-secondary/10"
-                      >
-                        <Download className="mr-2 h-4 w-4" /> Download Booklet
-                      </Button>
-                    ) : pending ? (
-                      <Button 
-                        disabled
-                        className="w-full bg-amber-500/20 text-amber-500 border border-amber-500/30 h-12 font-bold uppercase tracking-widest text-[10px]"
-                      >
-                        <Clock className="mr-2 h-4 w-4 animate-pulse" /> Awaiting Verification
-                      </Button>
-                    ) : (
-                      <Button 
-                        onClick={() => handleStartPayment(res)}
-                        className="w-full bg-primary text-white hover:bg-primary/90 h-12 font-bold uppercase tracking-widest text-[10px] border border-white/5"
-                      >
-                        <ShoppingCart className="mr-2 h-4 w-4" /> Unlock via EcoCash
-                      </Button>
+        
+        {isResourcesLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-secondary" />
+          </div>
+        ) : resources && resources.length > 0 ? (
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+            {resources.map((res) => {
+              const owned = hasAccess(res.id)
+              const pending = isPending(res.id)
+              return (
+                <Card key={res.id} className="flex flex-col sm:flex-row overflow-hidden border-white/5 bg-card/40 backdrop-blur-md group hover:border-secondary/30 transition-all duration-300 shadow-xl">
+                  <div className="relative w-full sm:w-48 h-56 sm:h-auto overflow-hidden">
+                    <Image 
+                      src={res.thumbnailUrl || "https://picsum.photos/seed/booklet/400/600"} 
+                      alt={res.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                    {!owned && !pending && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center sm:hidden">
+                         <Badge className="bg-primary/80 text-white font-mono">${res.priceDollars}.00</Badge>
+                      </div>
                     )}
                   </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
+                  
+                  <div className="flex-1 p-6 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <Badge variant="secondary" className={`text-[9px] h-5 uppercase font-bold tracking-widest ${owned ? 'bg-secondary/10 text-secondary border-secondary/20' : pending ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-muted/10 text-muted-foreground'}`}>
+                          {owned ? "Unlocked" : pending ? "Pending Verification" : "Locked"}
+                        </Badge>
+                        {!owned && !pending && <span className="text-lg font-bold text-white font-mono hidden sm:inline-block">${res.priceDollars}.00</span>}
+                      </div>
+                      <CardTitle className="text-lg sm:text-xl text-white italic font-bold">{res.title}</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm leading-relaxed line-clamp-2 text-muted-foreground">
+                        {res.description}
+                      </CardDescription>
+                    </div>
+
+                    <div className="pt-2">
+                      {owned ? (
+                        <Button 
+                          onClick={() => handleDownload(res)}
+                          className="w-full bg-secondary text-white hover:bg-secondary/90 h-12 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-secondary/10"
+                        >
+                          <Download className="mr-2 h-4 w-4" /> Download Booklet
+                        </Button>
+                      ) : pending ? (
+                        <Button 
+                          disabled
+                          className="w-full bg-amber-500/20 text-amber-500 border border-amber-500/30 h-12 font-bold uppercase tracking-widest text-[10px]"
+                        >
+                          <Clock className="mr-2 h-4 w-4 animate-pulse" /> Awaiting Verification
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={() => handleStartPayment(res)}
+                          className="w-full bg-primary text-white hover:bg-primary/90 h-12 font-bold uppercase tracking-widest text-[10px] border border-white/5"
+                        >
+                          <ShoppingCart className="mr-2 h-4 w-4" /> Unlock via EcoCash
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-muted-foreground italic">No study resources found in the library.</div>
+        )}
       </div>
 
       <Dialog open={isPaying} onOpenChange={setIsPaying}>
