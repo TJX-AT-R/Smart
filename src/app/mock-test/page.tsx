@@ -67,15 +67,25 @@ export default function MockTestPage() {
 
   useEffect(() => {
     async function checkAdmin() {
-      if (user) {
-        if (user.email === SUPER_ADMIN_EMAIL) {
-          setIsAdmin(true)
-          return
-        }
+      if (!user) {
+        setIsAdmin(false)
+        return
+      }
+      
+      if (user.email === SUPER_ADMIN_EMAIL) {
+        setIsAdmin(true)
+        return
+      }
+      
+      try {
         const userDoc = await getDoc(doc(db, "users", user.uid))
         if (userDoc.exists() && userDoc.data().isAdmin) {
           setIsAdmin(true)
+        } else {
+          setIsAdmin(false)
         }
+      } catch (err) {
+        setIsAdmin(false)
       }
     }
     checkAdmin()
@@ -213,6 +223,7 @@ export default function MockTestPage() {
 
   // Admin Actions
   const handleOpenEdit = () => {
+    if (!isAdmin) return
     const q = testQuestions[currentIndex]
     if (!q) return
     setEditForm({
@@ -228,6 +239,7 @@ export default function MockTestPage() {
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) return
     const file = e.target.files?.[0]
     if (!file || !storage) return
 
@@ -256,6 +268,7 @@ export default function MockTestPage() {
   }
 
   const handleSaveEdit = async () => {
+    if (!isAdmin) return
     const q = testQuestions[currentIndex]
     if (!db || !q?.id) return
     setIsSavingEdit(true)
@@ -279,6 +292,7 @@ export default function MockTestPage() {
   }
 
   const handleDeleteQuestion = async () => {
+    if (!isAdmin) return
     const q = testQuestions[currentIndex]
     if (!db || !q?.id) return
     if (!confirm("Remove this scenario permanently from the repository?")) return
@@ -442,7 +456,7 @@ export default function MockTestPage() {
               <Button variant="ghost" size="icon" className="bg-primary/20 hover:bg-primary/40 text-secondary border border-secondary/20 h-8 w-8" onClick={handleOpenEdit}>
                 <Pencil size={14} />
               </Button>
-              <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 h-8 w-8" onClick={handleDeleteQuestion}>
+              <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-secondary/20 h-8 w-8" onClick={handleDeleteQuestion}>
                 <Trash2 size={14} />
               </Button>
             </div>

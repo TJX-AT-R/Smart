@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
@@ -61,15 +60,25 @@ export default function CategoryPracticePage() {
 
   useEffect(() => {
     async function checkAdmin() {
-      if (user) {
-        if (user.email === SUPER_ADMIN_EMAIL) {
-          setIsAdmin(true)
-          return
-        }
+      if (!user) {
+        setIsAdmin(false)
+        return
+      }
+      
+      if (user.email === SUPER_ADMIN_EMAIL) {
+        setIsAdmin(true)
+        return
+      }
+      
+      try {
         const userDoc = await getDoc(doc(db, "users", user.uid))
         if (userDoc.exists() && userDoc.data().isAdmin) {
           setIsAdmin(true)
+        } else {
+          setIsAdmin(false)
         }
+      } catch (err) {
+        setIsAdmin(false)
       }
     }
     checkAdmin()
@@ -123,7 +132,7 @@ export default function CategoryPracticePage() {
 
   // Admin Actions
   const handleOpenEdit = () => {
-    if (!currentQuestion) return
+    if (!isAdmin || !currentQuestion) return
     setEditForm({
       text: currentQuestion.text,
       category: currentQuestion.category,
@@ -137,6 +146,7 @@ export default function CategoryPracticePage() {
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) return
     const file = e.target.files?.[0]
     if (!file || !storage) return
 
@@ -165,7 +175,7 @@ export default function CategoryPracticePage() {
   }
 
   const handleSaveEdit = async () => {
-    if (!db || !currentQuestion.id) return
+    if (!isAdmin || !db || !currentQuestion.id) return
     setIsSaving(true)
     try {
       const qRef = doc(db, "questions", currentQuestion.id)
@@ -183,7 +193,7 @@ export default function CategoryPracticePage() {
   }
 
   const handleDeleteQuestion = async () => {
-    if (!db || !currentQuestion.id) return
+    if (!isAdmin || !db || !currentQuestion.id) return
     if (!confirm("Are you sure you want to terminate this scenario from the repository?")) return
     
     setIsDeleting(true)
