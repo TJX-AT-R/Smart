@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -6,21 +7,36 @@ import { MOCK_QUESTIONS } from "@/app/lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Timer, AlertCircle, CheckCircle2, Trophy, RotateCcw, ArrowRight, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Timer, AlertCircle, CheckCircle2, Trophy, RotateCcw, ArrowRight, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, ShieldAlert } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { doc, collection, setDoc, serverTimestamp, query, limit } from "firebase/firestore"
+import { doc, collection, setDoc, serverTimestamp, query, limit, getDoc, updateDoc, deleteDoc } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 import Image from "next/image"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+
+const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 
 export default function MockTestPage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
   const totalQuestions = 25
   const passThresholdPercent = 92
-  const initialTime = 8 * 60 // Updated to 8 minutes
+  const initialTime = 8 * 60
 
   const [testQuestions, setTestQuestions] = useState<any[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -31,6 +47,35 @@ export default function MockTestPage() {
   const [score, setScore] = useState(0)
   const [startTime, setStartTime] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Admin Edit State
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [editForm, setEditForm] = useState({
+    text: "",
+    category: "",
+    options: ["", "", "", ""],
+    correctAnswer: "",
+    explanation: "",
+    imageUrl: ""
+  })
+
+  useEffect(() => {
+    async function checkAdmin() {
+      if (user) {
+        if (user.email === SUPER_ADMIN_EMAIL) {
+          setIsAdmin(true)
+          return
+        }
+        const userDoc = await getDoc(doc(db, "users", user.uid))
+        if (userDoc.exists() && userDoc.data().isAdmin) {
+          setIsAdmin(true)
+        }
+      }
+    }
+    checkAdmin()
+  }, [user, db])
 
   const questionsQuery = useMemoFirebase(() => {
     if (!db) return null
@@ -162,6 +207,63 @@ export default function MockTestPage() {
     }
   }
 
+  // Admin Actions
+  const handleOpenEdit = () => {
+    const q = testQuestions[currentIndex]
+    if (!q) return
+    setEditForm({
+      text: q.text,
+      category: q.category,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation || "",
+      imageUrl: q.imageUrl || ""
+    })
+    setIsEditOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    const q = testQuestions[currentIndex]
+    if (!db || !q?.id) return
+    setIsSavingEdit(true)
+    try {
+      const qRef = doc(db, "questions", q.id)
+      await updateDoc(qRef, {
+        ...editForm,
+        updatedAt: serverTimestamp()
+      })
+      toast({ title: "Scenario Synced", description: "Updated across entire platform bank." })
+      // Update local test state
+      const updatedQuestions = [...testQuestions]
+      updatedQuestions[currentIndex] = { ...q, ...editForm }
+      setTestQuestions(updatedQuestions)
+      setIsEditOpen(false)
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: error.message })
+    } finally {
+      setIsSavingEdit(false)
+    }
+  }
+
+  const handleDeleteQuestion = async () => {
+    const q = testQuestions[currentIndex]
+    if (!db || !q?.id) return
+    if (!confirm("Remove this scenario permanently from the repository?")) return
+    
+    try {
+      await deleteDoc(doc(db, "questions", q.id))
+      toast({ title: "Scenario Terminated" })
+      // Skip to next question
+      if (currentIndex < totalQuestions - 1) {
+        nextQuestion()
+      } else {
+        finishTest()
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message })
+    }
+  }
+
   if (isDbLoading && !isTestActive) {
     return (
       <div className="flex h-[70vh] items-center justify-center">
@@ -177,7 +279,7 @@ export default function MockTestPage() {
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-secondary/20 rounded-full flex items-center justify-center mx-auto text-secondary mb-6 shadow-lg shadow-secondary/10">
             <Timer size={40} className="sm:size-48" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight uppercase italic italic text-shadow-sm">Official Mock Test</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight uppercase italic text-shadow-sm">Official Mock Test</h1>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             This test consists of {totalQuestions} questions. You have exactly {initialTime / 60} minutes to complete it.
           </p>
@@ -301,10 +403,23 @@ export default function MockTestPage() {
       </div>
 
       <div className="grid lg:grid-cols-7 gap-6">
-        <Card className="lg:col-span-5 shadow-2xl border-white/5 bg-card/30 backdrop-blur-md overflow-hidden flex flex-col">
+        <Card className="lg:col-span-5 shadow-2xl border-white/5 bg-card/30 backdrop-blur-md overflow-hidden flex flex-col relative">
+          {isAdmin && (
+            <div className="absolute top-4 right-4 z-20 flex gap-2">
+              <Button variant="ghost" size="icon" className="bg-primary/20 hover:bg-primary/40 text-secondary border border-secondary/20" onClick={handleOpenEdit}>
+                <Pencil size={16} />
+              </Button>
+              <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20" onClick={handleDeleteQuestion}>
+                <Trash2 size={16} />
+              </Button>
+              <Badge variant="outline" className="bg-destructive/5 text-destructive border-destructive/20 text-[8px] uppercase tracking-widest h-6">
+                <ShieldAlert size={10} className="mr-1" /> Admin mode
+              </Badge>
+            </div>
+          )}
           <CardHeader className="p-6 sm:p-10 pb-4">
             <Badge variant="outline" className="mb-4 w-fit border-secondary/30 text-secondary text-[10px] font-bold tracking-widest uppercase">{currentQuestion.category}</Badge>
-            <CardTitle className="text-xl sm:text-2xl font-bold leading-tight text-white mb-6">
+            <CardTitle className="text-xl sm:text-2xl font-bold leading-tight text-white mb-6 pr-24">
               {currentQuestion.text}
             </CardTitle>
             {currentQuestion.imageUrl && (
@@ -400,6 +515,78 @@ export default function MockTestPage() {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Admin Quick Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-3xl bg-card border-white/5 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="italic uppercase tracking-tighter text-xl">Quick Edit Scenario</DialogTitle>
+            <DialogDescription className="text-[10px] uppercase font-bold text-secondary">Synchronize repository updates from mock session.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-6">
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Scenario Question Text</Label>
+              <Input 
+                value={editForm.text}
+                onChange={(e) => setEditForm({...editForm, text: e.target.value})}
+                className="bg-background/50 border-white/10"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</Label>
+                <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Diagram URL</Label>
+                <Input 
+                  value={editForm.imageUrl}
+                  onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
+                  className="bg-background/50 border-white/10"
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Options</Label>
+              <div className="grid gap-3">
+                {editForm.options.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Input 
+                      value={opt}
+                      onChange={(e) => {
+                        const opts = [...editForm.options]
+                        opts[i] = e.target.value
+                        setEditForm({...editForm, options: opts})
+                      }}
+                      className={`flex-1 bg-background/50 border-white/10 ${editForm.correctAnswer === opt ? 'border-secondary' : ''}`}
+                    />
+                    <Button 
+                      variant={editForm.correctAnswer === opt ? "secondary" : "outline"}
+                      className="text-[10px] uppercase font-bold"
+                      onClick={() => setEditForm({...editForm, correctAnswer: opt})}
+                    >
+                      Correct
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Official Explanation</Label>
+              <Textarea 
+                value={editForm.explanation}
+                onChange={(e) => setEditForm({...editForm, explanation: e.target.value})}
+                className="bg-background/50 border-white/10 min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={handleSaveEdit} disabled={isSavingEdit}>
+              {isSavingEdit ? <Loader2 className="animate-spin mr-2" /> : "Sync Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

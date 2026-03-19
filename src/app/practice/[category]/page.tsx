@@ -1,23 +1,39 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { MOCK_QUESTIONS } from "@/app/lib/data"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, ChevronRight, Loader2, Info } from "lucide-react"
+import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, ChevronRight, Loader2, Info, Pencil, Trash2, ShieldAlert } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, where } from "firebase/firestore"
+import { collection, query, where, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
 import Image from "next/image"
 import { AIExplanation } from "@/components/AIExplanation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+
+const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 
 export default function CategoryPracticePage() {
   const { category } = useParams()
   const router = useRouter()
+  const { user } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
   const decodedCategory = decodeURIComponent(category as string)
 
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -25,6 +41,36 @@ export default function CategoryPracticePage() {
   const [isAnswered, setIsAnswered] = useState(false)
   const [score, setScore] = useState(0)
   const [showResults, setShowResults] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Admin Edit State
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [editForm, setEditForm] = useState({
+    text: "",
+    category: "",
+    options: ["", "", "", ""],
+    correctAnswer: "",
+    explanation: "",
+    imageUrl: ""
+  })
+
+  useEffect(() => {
+    async function checkAdmin() {
+      if (user) {
+        if (user.email === SUPER_ADMIN_EMAIL) {
+          setIsAdmin(true)
+          return
+        }
+        const userDoc = await getDoc(doc(db, "users", user.uid))
+        if (userDoc.exists() && userDoc.data().isAdmin) {
+          setIsAdmin(true)
+        }
+      }
+    }
+    checkAdmin()
+  }, [user, db])
 
   const qRef = useMemoFirebase(() => {
     if (!db) return null
@@ -70,6 +116,58 @@ export default function CategoryPracticePage() {
     setIsAnswered(false)
     setScore(0)
     setShowResults(false)
+  }
+
+  // Admin Actions
+  const handleOpenEdit = () => {
+    if (!currentQuestion) return
+    setEditForm({
+      text: currentQuestion.text,
+      category: currentQuestion.category,
+      options: currentQuestion.options,
+      correctAnswer: currentQuestion.correctAnswer,
+      explanation: currentQuestion.explanation || "",
+      imageUrl: currentQuestion.imageUrl || ""
+    })
+    setIsEditOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!db || !currentQuestion.id) return
+    setIsSaving(true)
+    try {
+      const qRef = doc(db, "questions", currentQuestion.id)
+      await updateDoc(qRef, {
+        ...editForm,
+        updatedAt: serverTimestamp()
+      })
+      toast({ title: "Scenario Updated", description: "Changes synced to master bank." })
+      setIsEditOpen(false)
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: error.message })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteQuestion = async () => {
+    if (!db || !currentQuestion.id) return
+    if (!confirm("Are you sure you want to terminate this scenario from the repository?")) return
+    
+    setIsDeleting(true)
+    try {
+      await deleteDoc(doc(db, "questions", currentQuestion.id))
+      toast({ title: "Scenario Terminated" })
+      if (currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1)
+      } else if (questions.length === 1) {
+        router.back()
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message })
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (isQuestionsLoading) {
@@ -165,12 +263,25 @@ export default function CategoryPracticePage() {
         </div>
       </div>
 
-      <Card className="shadow-2xl border-white/5 bg-card/30 backdrop-blur-xl overflow-hidden flex flex-col">
+      <Card className="shadow-2xl border-white/5 bg-card/30 backdrop-blur-xl overflow-hidden flex flex-col relative">
+        {isAdmin && (
+          <div className="absolute top-4 right-4 z-20 flex gap-2">
+            <Button variant="ghost" size="icon" className="bg-primary/20 hover:bg-primary/40 text-secondary border border-secondary/20" onClick={handleOpenEdit}>
+              <Pencil size={16} />
+            </Button>
+            <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20" onClick={handleDeleteQuestion} disabled={isDeleting}>
+              {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+            </Button>
+            <Badge variant="outline" className="bg-destructive/5 text-destructive border-destructive/20 text-[8px] uppercase tracking-widest h-6">
+              <ShieldAlert size={10} className="mr-1" /> Admin mode
+            </Badge>
+          </div>
+        )}
         <CardHeader className="p-6 sm:p-10 pb-6">
           <Badge variant="outline" className="mb-4 w-fit border-secondary/30 text-secondary text-[10px] font-bold tracking-widest uppercase italic">
             {decodedCategory}
           </Badge>
-          <CardTitle className="text-xl sm:text-2xl font-bold leading-tight text-white mb-6">
+          <CardTitle className="text-xl sm:text-2xl font-bold leading-tight text-white mb-6 pr-24">
             {currentQuestion.text}
           </CardTitle>
           
@@ -258,6 +369,78 @@ export default function CategoryPracticePage() {
           )}
         </CardFooter>
       </Card>
+
+      {/* Admin Quick Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-3xl bg-card border-white/5 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="italic uppercase tracking-tighter text-xl">Quick Edit Scenario</DialogTitle>
+            <DialogDescription className="text-[10px] uppercase font-bold text-secondary">Synchronize repository updates from live session.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-6">
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Scenario Question Text</Label>
+              <Input 
+                value={editForm.text}
+                onChange={(e) => setEditForm({...editForm, text: e.target.value})}
+                className="bg-background/50 border-white/10"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</Label>
+                <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Diagram URL</Label>
+                <Input 
+                  value={editForm.imageUrl}
+                  onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
+                  className="bg-background/50 border-white/10"
+                />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Options</Label>
+              <div className="grid gap-3">
+                {editForm.options.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Input 
+                      value={opt}
+                      onChange={(e) => {
+                        const opts = [...editForm.options]
+                        opts[i] = e.target.value
+                        setEditForm({...editForm, options: opts})
+                      }}
+                      className={`flex-1 bg-background/50 border-white/10 ${editForm.correctAnswer === opt ? 'border-secondary' : ''}`}
+                    />
+                    <Button 
+                      variant={editForm.correctAnswer === opt ? "secondary" : "outline"}
+                      className="text-[10px] uppercase font-bold"
+                      onClick={() => setEditForm({...editForm, correctAnswer: opt})}
+                    >
+                      Correct
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Official Explanation</Label>
+              <Textarea 
+                value={editForm.explanation}
+                onChange={(e) => setEditForm({...editForm, explanation: e.target.value})}
+                className="bg-background/50 border-white/10 min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={handleSaveEdit} disabled={isSaving}>
+              {isSaving ? <Loader2 className="animate-spin mr-2" /> : "Sync Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

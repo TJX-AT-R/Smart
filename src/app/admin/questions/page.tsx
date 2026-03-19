@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
+import { collection, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc } from "firebase/firestore"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,10 +19,9 @@ import {
   ChevronLeft, 
   CheckCircle2, 
   AlertCircle,
-  HelpCircle,
-  Image as ImageIcon,
   Database,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Pencil
 } from "lucide-react"
 import {
   Dialog,
@@ -45,13 +44,14 @@ export default function AdminQuestionsPage() {
   const { toast } = useToast()
   
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
-  const [isAdding, setIsAdding] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [isSeeding, setIsSeeding] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
-  // New Question Form State
-  const [newQuestion, setNewQuestion] = useState({
+  // Question Form State
+  const [questionForm, setQuestionForm] = useState({
     text: "",
     category: "Road Signs",
     options: ["", "", "", ""],
@@ -87,29 +87,55 @@ export default function AdminQuestionsPage() {
 
   const { data: questions, isLoading: isQuestionsLoading } = useCollection(questionsQuery)
 
-  const handleAddQuestion = async () => {
-    if (!db || !newQuestion.text || !newQuestion.correctAnswer) {
+  const handleOpenAddDialog = () => {
+    setEditingId(null)
+    setQuestionForm({ text: "", category: "Road Signs", options: ["", "", "", ""], correctAnswer: "", explanation: "", imageUrl: "" })
+    setIsDialogOpen(true)
+  }
+
+  const handleOpenEditDialog = (q: any) => {
+    setEditingId(q.id)
+    setQuestionForm({
+      text: q.text,
+      category: q.category,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      explanation: q.explanation || "",
+      imageUrl: q.imageUrl || ""
+    })
+    setIsDialogOpen(true)
+  }
+
+  const handleSaveQuestion = async () => {
+    if (!db || !questionForm.text || !questionForm.correctAnswer) {
       toast({ variant: "destructive", title: "Validation Error", description: "Questions must have text and a designated correct answer." })
       return
     }
 
-    setIsAdding(true)
+    setIsSaving(true)
     try {
-      const questionRef = doc(collection(db, "questions"))
-      await setDoc(questionRef, {
-        ...newQuestion,
-        id: questionRef.id,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      })
-
-      toast({ title: "Repository Updated", description: "Scenario and correct answer locked into the bank." })
-      setNewQuestion({ text: "", category: "Road Signs", options: ["", "", "", ""], correctAnswer: "", explanation: "", imageUrl: "" })
+      if (editingId) {
+        const questionRef = doc(db, "questions", editingId)
+        await updateDoc(questionRef, {
+          ...questionForm,
+          updatedAt: serverTimestamp()
+        })
+        toast({ title: "Scenario Updated", description: "The existing bank entry has been synchronized." })
+      } else {
+        const questionRef = doc(collection(db, "questions"))
+        await setDoc(questionRef, {
+          ...questionForm,
+          id: questionRef.id,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        })
+        toast({ title: "Repository Updated", description: "New scenario locked into the bank." })
+      }
       setIsDialogOpen(false)
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sync Error", description: error.message })
     } finally {
-      setIsAdding(false)
+      setIsSaving(false)
     }
   }
 
@@ -176,13 +202,15 @@ export default function AdminQuestionsPage() {
           )}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-secondary text-white hover:bg-secondary/90 h-10 px-6 font-bold uppercase tracking-widest text-xs">
+              <Button onClick={handleOpenAddDialog} className="bg-secondary text-white hover:bg-secondary/90 h-10 px-6 font-bold uppercase tracking-widest text-xs">
                 <Plus size={16} className="mr-2" /> Add Scenario
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl bg-card border-white/5 shadow-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="italic uppercase tracking-tighter text-xl">Create Theory Scenario</DialogTitle>
+                <DialogTitle className="italic uppercase tracking-tighter text-xl">
+                  {editingId ? "Edit Theory Scenario" : "Create Theory Scenario"}
+                </DialogTitle>
                 <DialogDescription className="text-xs uppercase tracking-widest font-bold text-secondary">Configure scenario and designate the correct path.</DialogDescription>
               </DialogHeader>
               <div className="space-y-6 py-6">
@@ -190,8 +218,8 @@ export default function AdminQuestionsPage() {
                   <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Scenario Question Text</Label>
                   <Input 
                     placeholder="e.g. What is the national speed limit on a single carriageway?" 
-                    value={newQuestion.text}
-                    onChange={(e) => setNewQuestion({...newQuestion, text: e.target.value})}
+                    value={questionForm.text}
+                    onChange={(e) => setQuestionForm({...questionForm, text: e.target.value})}
                     className="bg-background/50 border-white/10 h-12"
                   />
                 </div>
@@ -199,8 +227,8 @@ export default function AdminQuestionsPage() {
                   <div className="space-y-2">
                     <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Category</Label>
                     <select 
-                      value={newQuestion.category}
-                      onChange={(e) => setNewQuestion({...newQuestion, category: e.target.value})}
+                      value={questionForm.category}
+                      onChange={(e) => setQuestionForm({...questionForm, category: e.target.value})}
                       className="w-full bg-background/50 border border-white/10 h-12 rounded-lg px-3 text-sm focus:ring-1 focus:ring-secondary outline-none"
                     >
                       <option value="Road Signs">Road Signs</option>
@@ -214,8 +242,8 @@ export default function AdminQuestionsPage() {
                     <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Diagram URL</Label>
                     <Input 
                       placeholder="https://images.unsplash.com/..." 
-                      value={newQuestion.imageUrl}
-                      onChange={(e) => setNewQuestion({...newQuestion, imageUrl: e.target.value})}
+                      value={questionForm.imageUrl}
+                      onChange={(e) => setQuestionForm({...questionForm, imageUrl: e.target.value})}
                       className="bg-background/50 border-white/10 h-12"
                     />
                   </div>
@@ -224,25 +252,25 @@ export default function AdminQuestionsPage() {
                 <div className="space-y-4">
                   <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Answer Options (Highlight Correct)</Label>
                   <div className="grid gap-3">
-                    {newQuestion.options.map((opt, i) => (
+                    {questionForm.options.map((opt, i) => (
                       <div key={i} className="flex gap-2 group">
                         <Input 
                           placeholder={`Option ${labelMap(i)}`} 
                           value={opt}
                           onChange={(e) => {
-                            const opts = [...newQuestion.options]
+                            const opts = [...questionForm.options]
                             opts[i] = e.target.value
-                            setNewQuestion({...newQuestion, options: opts})
+                            setQuestionForm({...questionForm, options: opts})
                           }}
-                          className={`bg-background/50 border-white/10 h-12 flex-1 transition-all ${newQuestion.correctAnswer === opt && opt !== "" ? 'border-secondary ring-1 ring-secondary/30' : ''}`}
+                          className={`bg-background/50 border-white/10 h-12 flex-1 transition-all ${questionForm.correctAnswer === opt && opt !== "" ? 'border-secondary ring-1 ring-secondary/30' : ''}`}
                         />
                         <Button 
                           size="sm" 
-                          variant={newQuestion.correctAnswer === opt && opt !== "" ? "secondary" : "outline"}
-                          className={`h-12 px-6 shrink-0 font-bold uppercase tracking-widest text-[10px] transition-all ${newQuestion.correctAnswer === opt && opt !== "" ? 'bg-secondary text-white shadow-lg shadow-secondary/20' : 'hover:border-secondary/50'}`}
-                          onClick={() => setNewQuestion({...newQuestion, correctAnswer: opt})}
+                          variant={questionForm.correctAnswer === opt && opt !== "" ? "secondary" : "outline"}
+                          className={`h-12 px-6 shrink-0 font-bold uppercase tracking-widest text-[10px] transition-all ${questionForm.correctAnswer === opt && opt !== "" ? 'bg-secondary text-white shadow-lg shadow-secondary/20' : 'hover:border-secondary/50'}`}
+                          onClick={() => setQuestionForm({...questionForm, correctAnswer: opt})}
                         >
-                          {newQuestion.correctAnswer === opt && opt !== "" ? <CheckCircle2 size={16} /> : "Mark Correct"}
+                          {questionForm.correctAnswer === opt && opt !== "" ? <CheckCircle2 size={16} /> : "Mark Correct"}
                         </Button>
                       </div>
                     ))}
@@ -256,15 +284,15 @@ export default function AdminQuestionsPage() {
                   </Label>
                   <Textarea 
                     placeholder="Explain why this answer is correct for the learner..." 
-                    value={newQuestion.explanation}
-                    onChange={(e) => setNewQuestion({...newQuestion, explanation: e.target.value})}
+                    value={questionForm.explanation}
+                    onChange={(e) => setQuestionForm({...questionForm, explanation: e.target.value})}
                     className="bg-background/50 border-white/10 min-h-[100px]"
                   />
                 </div>
               </div>
               <DialogFooter className="sticky bottom-0 bg-card pt-4 border-t border-white/5">
-                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={handleAddQuestion} disabled={isAdding}>
-                  {isAdding ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Authorize & Save Scenario"}
+                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={handleSaveQuestion} disabled={isSaving}>
+                  {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : editingId ? "Save Changes" : "Authorize & Save Scenario"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -313,15 +341,25 @@ export default function AdminQuestionsPage() {
                         <Badge variant="outline" className="border-secondary/20 text-secondary text-[9px] uppercase font-bold tracking-widest">{q.category}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-destructive hover:bg-destructive/10 h-9 w-9"
-                          onClick={() => handleDeleteQuestion(q.id)}
-                          disabled={isDeleting === q.id}
-                        >
-                          {isDeleting === q.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-muted-foreground hover:text-white h-9 w-9"
+                            onClick={() => handleOpenEditDialog(q)}
+                          >
+                            <Pencil size={16} />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:bg-destructive/10 h-9 w-9"
+                            onClick={() => handleDeleteQuestion(q.id)}
+                            disabled={isDeleting === q.id}
+                          >
+                            {isDeleting === q.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
