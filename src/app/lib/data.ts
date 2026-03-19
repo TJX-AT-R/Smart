@@ -1,4 +1,5 @@
-import { Question, LessonModule, StudyResource } from './types';
+
+import { Question, StudyResource } from './types';
 
 export const MOCK_QUESTIONS: Question[] = [
   {
@@ -185,41 +186,6 @@ export const MOCK_QUESTIONS: Question[] = [
     options: ['Stop and wait for the green light', 'Give way to pedestrians on the crossing', 'Proceed with caution'],
     correctAnswer: 'Give way to pedestrians on the crossing',
     category: 'Rules of the Road'
-  }
-];
-
-export const MOCK_LESSONS: LessonModule[] = [
-  {
-    id: 'm1',
-    title: 'Alertness',
-    description: 'Master the core concepts of staying alert and aware on the road.',
-    icon: 'Eye',
-    content: 'Alertness is the foundation of safe driving. It involves being aware of your surroundings at all times...',
-    progress: 100
-  },
-  {
-    id: 'm2',
-    title: 'Road & Traffic Signs',
-    description: 'Learn to identify and interpret all mandatory and warning road signs.',
-    icon: 'Navigation',
-    content: 'Road signs in the UK are categorised into three main types: Warning, Regulatory, and Informational...',
-    progress: 65
-  },
-  {
-    id: 'm3',
-    title: 'Hazard Perception',
-    description: 'Identify potential and developing hazards before they become dangerous.',
-    icon: 'AlertTriangle',
-    content: 'Developing hazard perception skills is crucial. A hazard is anything that might cause you to change speed or direction...',
-    progress: 30
-  },
-  {
-    id: 'm4',
-    title: 'Safety Margins',
-    description: 'Understanding stopping distances, weather conditions, and safe gaps.',
-    icon: 'ArrowRightLeft',
-    content: 'Maintaining a safe distance from the vehicle in front is essential. Remember the "two-second rule"...',
-    progress: 0
   }
 ];
 

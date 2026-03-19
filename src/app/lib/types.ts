@@ -9,17 +9,6 @@ export interface Question {
   explanation?: string;
 }
 
-export interface LessonModule {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  content: string;
-  progress: number;
-  imageUrl?: string;
-  aiExplanation?: string;
-}
-
 export interface StudyResource {
   id: string;
   title: string;

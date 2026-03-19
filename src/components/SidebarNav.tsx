@@ -7,7 +7,6 @@ import { signOut } from "firebase/auth"
 import { useAuth } from "@/firebase"
 import {
   LayoutDashboard,
-  BookOpen,
   Pencil,
   ClipboardCheck,
   Trophy,
@@ -31,7 +30,6 @@ import {
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: BookOpen, label: "Theory Lessons", href: "/lessons" },
   { icon: Pencil, label: "Practice Bank", href: "/practice" },
   { icon: ClipboardCheck, label: "Mock Tests", href: "/mock-test" },
   { icon: Download, label: "Study Resources", href: "/resources" },

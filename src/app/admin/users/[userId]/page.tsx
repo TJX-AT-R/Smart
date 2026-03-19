@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -11,9 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ChevronLeft, Loader2, BookOpen, User as UserIcon, CheckCircle2, Crown, ShieldCheck } from "lucide-react"
+import { ChevronLeft, Loader2, User as UserIcon, CheckCircle2, Crown, ShieldCheck, ClipboardCheck } from "lucide-react"
 import { format } from "date-fns"
-import { MOCK_LESSONS } from "@/app/lib/data"
 import { useToast } from "@/hooks/use-toast"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
@@ -70,13 +68,6 @@ export default function AdminUserProgressPage() {
   }, [db, userId, isAdmin])
 
   const { data: tests, isLoading: isTestsLoading } = useCollection(testsQuery)
-
-  const lessonsQuery = useMemoFirebase(() => {
-    if (!db || !userId || isAdmin === null) return null
-    return collection(db, "users", userId, "lessonProgress")
-  }, [db, userId, isAdmin])
-
-  const { data: lessonProgress, isLoading: isLessonsLoading } = useCollection(lessonsQuery)
 
   const togglePremiumAccess = () => {
     if (!db || !userId || !learner) return
@@ -162,38 +153,14 @@ export default function AdminUserProgressPage() {
         </Card>
       </section>
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
+      <div className="grid gap-6 sm:gap-8 grid-cols-1">
         <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-xl">
           <CardHeader className="bg-primary/20 border-b border-white/5">
             <CardTitle className="flex items-center gap-2 text-lg italic uppercase tracking-tighter">
-              <BookOpen className="text-secondary" size={20} />
-              Module Mastery
+              <ClipboardCheck className="text-secondary" size={20} />
+              Simulation History
             </CardTitle>
-            <CardDescription className="text-[10px] uppercase tracking-widest font-bold">Progress across official syllabus.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {MOCK_LESSONS.map((lesson) => {
-                const progress = lessonProgress?.find(p => p.lessonId === lesson.id)
-                return (
-                  <div key={lesson.id} className="flex items-center justify-between p-4 rounded-2xl bg-background/20 border border-white/5 group hover:border-secondary/30 transition-all">
-                    <span className="text-[10px] font-bold text-white uppercase italic truncate max-w-[140px]">{lesson.title}</span>
-                    {progress?.isCompleted ? (
-                      <CheckCircle2 className="h-5 w-5 text-secondary" />
-                    ) : (
-                      <Badge variant="outline" className="text-[8px] opacity-40 uppercase font-bold">Pending</Badge>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/5 bg-card/40 backdrop-blur-sm overflow-hidden shadow-xl">
-          <CardHeader className="bg-primary/20 border-b border-white/5">
-            <CardTitle className="text-lg italic uppercase tracking-tighter">Simulation History</CardTitle>
-            <CardDescription className="text-[10px] uppercase tracking-widest font-bold">Last 20 mock attempts.</CardDescription>
+            <CardDescription className="text-[10px] uppercase tracking-widest font-bold">Last 20 mock attempts performance tracking.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Table>

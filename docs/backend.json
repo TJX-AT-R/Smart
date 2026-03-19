@@ -20,21 +20,6 @@
       },
       "required": ["id", "email", "firstName", "lastName", "registrationDate"]
     },
-    "Lesson": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Lesson",
-      "type": "object",
-      "description": "A dynamic theory module with visuals.",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "content": { "type": "string" },
-        "imageUrl": { "type": "string" },
-        "updatedAt": { "type": "object" }
-      },
-      "required": ["id", "title"]
-    },
     "Question": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Question",
@@ -110,21 +95,6 @@
         "createdAt": { "type": "object" }
       },
       "required": ["id", "userId", "scorePercentage"]
-    },
-    "LessonProgress": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "LessonProgress",
-      "type": "object",
-      "description": "Tracking completion of specific theory modules.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "lessonId": { "type": "string" },
-        "isCompleted": { "type": "boolean" },
-        "completionDate": { "type": "string", "format": "date-time" },
-        "createdAt": { "type": "object" }
-      },
-      "required": ["id", "userId", "lessonId", "isCompleted"]
     }
   },
   "auth": {
@@ -138,14 +108,6 @@
           "entityName": "User",
           "schema": { "$ref": "#/backend/entities/User" },
           "description": "Root learner profiles."
-        }
-      },
-      {
-        "path": "/lessons/{lessonId}",
-        "definition": {
-          "entityName": "Lesson",
-          "schema": { "$ref": "#/backend/entities/Lesson" },
-          "description": "Global theory content with diagrams."
         }
       },
       {
@@ -186,14 +148,6 @@
           "entityName": "TestAttempt",
           "schema": { "$ref": "#/backend/entities/TestAttempt" },
           "description": "Mock test results."
-        }
-      },
-      {
-        "path": "/users/{userId}/lessonProgress/{progressId}",
-        "definition": {
-          "entityName": "LessonProgress",
-          "schema": { "$ref": "#/backend/entities/LessonProgress" },
-          "description": "Real-time module tracking."
         }
       }
     ]

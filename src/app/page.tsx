@@ -1,9 +1,23 @@
-
 "use client"
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info, ArrowRight } from "lucide-react"
+import { 
+  Car, 
+  CheckCircle, 
+  BookOpen, 
+  Clock, 
+  ShieldCheck, 
+  Menu, 
+  ShieldAlert, 
+  LogOut, 
+  ChevronRight, 
+  ClipboardCheck, 
+  Info, 
+  ArrowRight,
+  Pencil,
+  LayoutGrid
+} from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser, useAuth } from "@/firebase"
@@ -127,7 +141,7 @@ export default function LandingPage() {
                     SmartPass <br /><span className="text-secondary font-normal not-italic block sm:inline">Guaranteed Pass</span>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed mx-auto lg:mx-0">
-                    The futuristic driving theory coach with professionally prepared tests and high-performance study modules.
+                    The futuristic driving theory coach with professionally prepared tests and high-performance study resources.
                   </p>
                 </div>
                 <div className="flex flex-col gap-4 sm:flex-row justify-center lg:justify-start">
@@ -173,9 +187,9 @@ export default function LandingPage() {
             </div>
             <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               <FeatureCard 
-                icon={<BookOpen size={32} />}
-                title="Theory Modules"
-                description="Comprehensive lessons structured to follow the official syllabus."
+                icon={<Pencil size={32} />}
+                title="Practice Bank"
+                description="Categorized scenarios designed to build absolute mastery of road rules."
               />
               <FeatureCard 
                 icon={<ShieldCheck size={32} />}
@@ -189,6 +203,22 @@ export default function LandingPage() {
                 description="Practice with 8-minute timed sessions that feel like the real thing."
               />
             </div>
+          </div>
+        </section>
+
+        <section className="bg-primary/40 border-y border-white/5 relative group py-20 sm:py-32">
+          <div className="absolute inset-0 bg-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+          <div className="container mx-auto px-4 sm:px-6 text-center space-y-6 relative z-10">
+            <div className="w-16 h-16 bg-secondary/20 rounded-2xl flex items-center justify-center mx-auto text-secondary mb-2">
+              <LayoutGrid size={32} />
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-white uppercase italic tracking-tighter">Randomized Scenario Mix</h3>
+            <p className="text-muted-foreground max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
+              Challenge your mental agility with a shuffled bank of questions from all categories. 
+            </p>
+            <Button size="lg" asChild className="bg-secondary text-white hover:bg-secondary/90 h-14 px-10 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter">
+              <Link href="/practice">Start Hybrid Practice</Link>
+            </Button>
           </div>
         </section>
       </main>
