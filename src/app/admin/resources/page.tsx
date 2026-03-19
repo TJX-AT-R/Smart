@@ -1,10 +1,10 @@
-
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage } from "@/firebase"
 import { collection, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc } from "firebase/firestore"
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import { 
   Plus, 
   Trash2, 
@@ -20,7 +21,9 @@ import {
   Download,
   BookOpen,
   Pencil,
-  ExternalLink
+  ExternalLink,
+  UploadCloud,
+  FileCheck
 } from "lucide-react"
 import {
   Dialog,
@@ -39,8 +42,10 @@ const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 export default function AdminResourcesPage() {
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
+  const storage = useStorage()
   const router = useRouter()
   const { toast } = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -48,6 +53,7 @@ export default function AdminResourcesPage() {
   const [isSeeding, setIsSeeding] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
 
   // Resource Form State
   const [resourceForm, setResourceForm] = useState({
@@ -88,6 +94,7 @@ export default function AdminResourcesPage() {
   const handleOpenAddDialog = () => {
     setEditingId(null)
     setResourceForm({ title: "", description: "", priceDollars: 5, downloadUrl: "", thumbnailUrl: "https://picsum.photos/seed/booklet/400/600" })
+    setUploadProgress(null)
     setIsDialogOpen(true)
   }
 
@@ -100,12 +107,38 @@ export default function AdminResourcesPage() {
       downloadUrl: res.downloadUrl,
       thumbnailUrl: res.thumbnailUrl || "https://picsum.photos/seed/booklet/400/600"
     })
+    setUploadProgress(null)
     setIsDialogOpen(true)
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !storage) return
+
+    const storageRef = ref(storage, `study-resources/${Date.now()}_${file.name}`)
+    const uploadTask = uploadBytesResumable(storageRef, file)
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        setUploadProgress(progress)
+      }, 
+      (error) => {
+        toast({ variant: "destructive", title: "Upload Failed", description: error.message })
+        setUploadProgress(null)
+      }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+        setResourceForm(prev => ({ ...prev, downloadUrl: downloadURL }))
+        setUploadProgress(null)
+        toast({ title: "Upload Complete", description: "File is now locked and ready for distribution." })
+      }
+    )
   }
 
   const handleSaveResource = async () => {
     if (!db || !resourceForm.title || !resourceForm.downloadUrl) {
-      toast({ variant: "destructive", title: "Validation Error", description: "Resources must have a title and a download URL." })
+      toast({ variant: "destructive", title: "Validation Error", description: "Resources must have a title and a valid download URL (or uploaded file)." })
       return
     }
 
@@ -203,7 +236,7 @@ export default function AdminResourcesPage() {
                 <Plus size={16} className="mr-2" /> Add Booklet
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-card border-white/5 shadow-2xl">
+            <DialogContent className="max-w-2xl bg-card border-white/5 shadow-2xl overflow-y-auto max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle className="italic uppercase tracking-tighter text-xl">
                   {editingId ? "Edit Study Booklet" : "New Study Booklet"}
@@ -233,7 +266,7 @@ export default function AdminResourcesPage() {
                   <div className="space-y-2">
                     <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Thumbnail URL</Label>
                     <Input 
-                      placeholder="https://picsum.photos/..." 
+                      placeholder="https://picsum.photos/seed/booklet/400/600" 
                       value={resourceForm.thumbnailUrl}
                       onChange={(e) => setResourceForm({...resourceForm, thumbnailUrl: e.target.value})}
                       className="bg-background/50 border-white/10"
@@ -241,14 +274,58 @@ export default function AdminResourcesPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Download URL (Secure Link)</Label>
-                  <Input 
-                    placeholder="e.g. Google Drive or Dropbox direct link" 
-                    value={resourceForm.downloadUrl}
-                    onChange={(e) => setResourceForm({...resourceForm, downloadUrl: e.target.value})}
-                    className="bg-background/50 border-white/10"
-                  />
+                <div className="space-y-4">
+                  <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Content Delivery (Direct Upload)</Label>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4">
+                       <Button 
+                         variant="outline" 
+                         className="flex-1 border-dashed border-white/20 h-24 flex flex-col gap-2 hover:bg-white/5 transition-all"
+                         onClick={() => fileInputRef.current?.click()}
+                         type="button"
+                         disabled={uploadProgress !== null}
+                       >
+                         {resourceForm.downloadUrl ? (
+                           <div className="flex flex-col items-center gap-1 text-secondary">
+                             <FileCheck size={24} />
+                             <span className="text-[10px] uppercase font-bold">File Linked Successfully</span>
+                           </div>
+                         ) : (
+                           <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                             <UploadCloud size={24} />
+                             <span className="text-[10px] uppercase font-bold">Upload Booklet File</span>
+                           </div>
+                         )}
+                       </Button>
+                       <input 
+                         type="file" 
+                         ref={fileInputRef} 
+                         className="hidden" 
+                         accept=".pdf,.doc,.docx" 
+                         onChange={handleFileUpload}
+                       />
+                    </div>
+                    
+                    {uploadProgress !== null && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-[10px] uppercase font-bold text-secondary">
+                          <span>Uploading to Cloud...</span>
+                          <span>{Math.round(uploadProgress)}%</span>
+                        </div>
+                        <Progress value={uploadProgress} className="h-1.5 bg-white/5" />
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Manual Download URL (Alternative)</Label>
+                      <Input 
+                        placeholder="e.g. Google Drive or Dropbox direct link" 
+                        value={resourceForm.downloadUrl}
+                        onChange={(e) => setResourceForm({...resourceForm, downloadUrl: e.target.value})}
+                        className="bg-background/50 border-white/10 text-xs"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -261,8 +338,8 @@ export default function AdminResourcesPage() {
                   />
                 </div>
               </div>
-              <DialogFooter>
-                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={handleSaveResource} disabled={isSaving}>
+              <DialogFooter className="border-t border-white/5 pt-4">
+                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={handleSaveResource} disabled={isSaving || uploadProgress !== null}>
                   {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : editingId ? "Save Changes" : "Publish Booklet"}
                 </Button>
               </DialogFooter>
