@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
@@ -12,7 +13,6 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage } fro
 import { collection, query, where, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import Image from "next/image"
-import { AIExplanation } from "@/components/AIExplanation"
 import {
   Dialog,
   DialogContent,
@@ -173,7 +173,7 @@ export default function CategoryPracticePage() {
         ...editForm,
         updatedAt: serverTimestamp()
       })
-      toast({ title: "Scenario Updated", description: "Changes synced to master bank." })
+      toast({ title: "Scenario Updated", description: "Manual explanation and details synced." })
       setIsEditOpen(false)
     } catch (error: any) {
       toast({ variant: "destructive", title: "Update Failed", description: error.message })
@@ -370,17 +370,12 @@ export default function CategoryPracticePage() {
             <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 duration-500">
               <div className="p-6 rounded-2xl bg-secondary/10 border border-secondary/20">
                  <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-2 flex items-center gap-2">
-                   <CheckCircle2 size={14} /> Official Explanation
+                   <CheckCircle2 size={14} /> Expert Explanation
                  </p>
                  <p className="text-sm text-foreground leading-relaxed">
-                   {currentQuestion.explanation || "No manual explanation provided for this scenario. Use the AI tool below for deep analysis."}
+                   {currentQuestion.explanation || "No expert explanation provided for this scenario yet."}
                  </p>
               </div>
-              <AIExplanation 
-                question={currentQuestion.text}
-                userAnswer={selectedOption || ""}
-                correctAnswer={currentQuestion.correctAnswer}
-              />
             </div>
           )}
         </CardContent>
@@ -407,7 +402,7 @@ export default function CategoryPracticePage() {
         <DialogContent className="max-w-3xl bg-card border-white/5 shadow-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="italic uppercase tracking-tighter text-xl">Quick Edit Scenario</DialogTitle>
-            <DialogDescription className="text-[10px] uppercase font-bold text-secondary">Synchronize repository updates from live session.</DialogDescription>
+            <DialogDescription className="text-[10px] uppercase font-bold text-secondary">Synchronize repository updates and expert explanations.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-6">
             <div className="space-y-2">

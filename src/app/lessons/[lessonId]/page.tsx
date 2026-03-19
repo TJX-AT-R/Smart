@@ -5,16 +5,26 @@ import { useParams, useRouter } from "next/navigation"
 import { MOCK_LESSONS } from "@/app/lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, CheckCircle2, Loader2, BookOpen, UploadCloud, ShieldAlert, Pencil, Trash2 } from "lucide-react"
+import { ChevronLeft, CheckCircle2, Loader2, BookOpen, UploadCloud, ShieldAlert, Pencil, Save } from "lucide-react"
 import { useUser, useFirestore, useDoc, useMemoFirebase, useStorage } from "@/firebase"
-import { doc, setDoc, serverTimestamp, updateDoc, deleteDoc, getDoc } from "firebase/firestore"
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
-import { TheoryAIExplanation } from "@/components/TheoryAIExplanation"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 
@@ -30,6 +40,14 @@ export default function LessonDetailPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
+  
+  // Admin Edit State
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    content: ""
+  })
 
   useEffect(() => {
     async function checkAdmin() {
@@ -84,6 +102,35 @@ export default function LessonDetailPage() {
     }
   }
 
+  const handleOpenEdit = () => {
+    if (!lesson) return
+    setEditForm({
+      title: lesson.title,
+      description: lesson.description,
+      content: lesson.content
+    })
+    setIsEditOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!db || !lessonId) return
+    setIsSaving(true)
+    try {
+      const lessonDocRef = doc(db, "lessons", lessonId as string)
+      await setDoc(lessonDocRef, {
+        ...editForm,
+        id: lessonId,
+        updatedAt: serverTimestamp()
+      }, { merge: true })
+      toast({ title: "Lesson Updated", description: "Manual content synced." })
+      setIsEditOpen(false)
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Update Failed", description: error.message })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !storage || !db || !lessonId) return
@@ -104,13 +151,10 @@ export default function LessonDetailPage() {
         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
         const lessonDocRef = doc(db, "lessons", lessonId as string)
         
-        const updateData = {
-          ...lesson,
+        await setDoc(lessonDocRef, {
           imageUrl: downloadURL,
           updatedAt: serverTimestamp()
-        }
-
-        await setDoc(lessonDocRef, updateData, { merge: true })
+        }, { merge: true })
         
         setUploadProgress(null)
         toast({ title: "Visual Synced", description: "Curriculum diagram updated successfully." })
@@ -147,6 +191,14 @@ export default function LessonDetailPage() {
             <Button 
               variant="outline" 
               size="sm" 
+              className="bg-primary/40 border-white/10 text-white h-8 px-3 text-[9px] font-bold uppercase tracking-widest"
+              onClick={handleOpenEdit}
+            >
+              <Pencil className="h-3 w-3 mr-1" /> Edit Content
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
               className="bg-secondary/10 border-secondary/20 text-secondary h-8 px-3 text-[9px] font-bold uppercase tracking-widest"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadProgress !== null}
@@ -156,7 +208,7 @@ export default function LessonDetailPage() {
             </Button>
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 h-8 flex items-center gap-1 text-[8px] uppercase tracking-widest">
-              <ShieldAlert size={10} /> Admin Overseer
+              <ShieldAlert size={10} /> Admin mode
             </Badge>
           </div>
         )}
@@ -197,11 +249,6 @@ export default function LessonDetailPage() {
               <p key={i} className="text-balance">{para}</p>
             ))}
           </div>
-
-          <TheoryAIExplanation 
-            topicTitle={lesson.title}
-            topicDescription={lesson.description}
-          />
         </CardContent>
 
         <CardFooter className="p-8 bg-muted/10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -226,11 +273,53 @@ export default function LessonDetailPage() {
               </Button>
             )}
             <Button variant="outline" onClick={() => router.push("/lessons")} className="flex-1 md:flex-none h-14 border-white/10 hover:bg-white/5 font-bold uppercase tracking-widest text-[10px]">
-              Next Module
+              Back to Curriculum
             </Button>
           </div>
         </CardFooter>
       </Card>
+
+      {/* Admin Content Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-3xl bg-card border-white/5 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="italic uppercase tracking-tighter text-xl">Edit Module Content</DialogTitle>
+            <DialogDescription className="text-[10px] uppercase font-bold text-secondary">Update the title, summary, and official explanation for this module.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-6">
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Module Title</Label>
+              <Input 
+                value={editForm.title}
+                onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                className="bg-background/50 border-white/10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Description / Summary</Label>
+              <Input 
+                value={editForm.description}
+                onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                className="bg-background/50 border-white/10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Official Content & Explanation</Label>
+              <Textarea 
+                value={editForm.content}
+                onChange={(e) => setEditForm({...editForm, content: e.target.value})}
+                className="bg-background/50 border-white/10 min-h-[300px] leading-relaxed"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button className="w-full bg-secondary text-white font-bold h-14 uppercase tracking-widest text-xs shadow-xl shadow-secondary/20" onClick={handleSaveEdit} disabled={isSaving}>
+              {isSaving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
