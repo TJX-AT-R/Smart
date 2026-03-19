@@ -3,13 +3,11 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info, ArrowRight, Sparkles, Zap, Search } from "lucide-react"
+import { Car, CheckCircle, BookOpen, Clock, ShieldCheck, Menu, ShieldAlert, LogOut, ChevronRight, ClipboardCheck, Info, ArrowRight } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { useState } from "react"
 import { useUser, useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
-import { useRouter } from "next/navigation"
 
 export default function LandingPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,7 +60,7 @@ export default function LandingPage() {
                 Login
               </Link>
               <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold uppercase tracking-widest text-[10px]">
-                <Link href="/login" className="flex items-center gap-2">Get Started <ArrowRight size={12} /></Link>
+                <Link href="/login" className="flex items-center gap-3">Get Started <ArrowRight size={12} /></Link>
               </Button>
             </div>
           )}
@@ -134,7 +132,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-4 sm:flex-row justify-center lg:justify-start">
                   <Button asChild size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-lg sm:text-xl bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-xl shadow-secondary/20 font-bold uppercase italic tracking-tighter">
-                    <Link href="/login" className="flex items-center gap-3">Get Started <ArrowRight className="h-5 w-5" /></Link>
+                    <Link href="/login" className="flex items-center gap-3">Get Started <ArrowRight size={12} /></Link>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-lg sm:text-xl border-white/10 hover:bg-white/5 text-white">
                     <Link href="/about">Learn More</Link>
@@ -165,39 +163,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
-
-        {/* AI Sign Explorer Preview */}
-        <section className="py-24 bg-primary/20 border-y border-white/5 relative overflow-hidden">
-          <div className="container mx-auto px-4 sm:px-6 relative z-10">
-            <div className="max-w-4xl mx-auto bg-card/40 backdrop-blur-2xl p-8 sm:p-12 rounded-[40px] border border-secondary/20 shadow-2xl">
-              <div className="grid lg:grid-cols-2 gap-12 items-center">
-                <div className="space-y-6 text-center lg:text-left">
-                  <Badge className="bg-secondary/10 text-secondary border-secondary/30 px-4 py-1 uppercase tracking-widest text-[10px] font-bold">SmartPass AI Alpha</Badge>
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white italic uppercase tracking-tighter">AI Road Sign <span className="text-secondary">Decoder</span></h2>
-                  <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-                    Struggling with complex road signs? Upload any diagram and our high-performance AI coach will provide a detailed, official explanation instantly.
-                  </p>
-                  <Button asChild variant="secondary" size="lg" className="h-14 px-8 font-bold uppercase tracking-widest text-xs">
-                    <Link href="/login" className="flex items-center gap-2">Try AI Decoder Now <Sparkles size={16} /></Link>
-                  </Button>
-                </div>
-                <div className="relative group">
-                  <div className="aspect-square bg-background/60 rounded-3xl border-2 border-dashed border-secondary/30 flex flex-col items-center justify-center p-8 text-center gap-4 group-hover:border-secondary transition-all">
-                    <div className="w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
-                      <Zap size={40} className="animate-pulse" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-white font-bold uppercase italic text-sm tracking-tighter">Instant Recognition</p>
-                      <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold">Upload & Explain</p>
-                    </div>
-                    <div className="absolute -top-4 -right-4 bg-secondary text-primary font-bold text-[10px] px-3 py-1 rounded-full shadow-lg">99.8% ACCURACY</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-secondary/5 blur-[150px] rounded-full -z-10" />
         </section>
 
         <section id="features" className="w-full py-20 sm:py-32 relative">

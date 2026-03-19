@@ -30,7 +30,8 @@ service cloud.firestore {
     }
 
     match /lessons/{lessonId} {
-      allow read: if isSignedIn();
+      // High-performance read access for global curriculum
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
 
