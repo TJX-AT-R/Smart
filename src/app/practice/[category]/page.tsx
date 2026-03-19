@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { MOCK_QUESTIONS } from "@/app/lib/data"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, ChevronRight, Loader2, Info, Pencil, Trash2, ShieldAlert } from "lucide-react"
+import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, ChevronRight, Loader2, Info, Pencil, Trash2, ShieldAlert, UploadCloud } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage } from "@/firebase"
 import { collection, query, where, doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore"
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import Image from "next/image"
 import { AIExplanation } from "@/components/AIExplanation"
 import {
@@ -32,7 +33,9 @@ export default function CategoryPracticePage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
+  const storage = useStorage()
   const { toast } = useToast()
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const decodedCategory = decodeURIComponent(category as string)
 
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -46,6 +49,7 @@ export default function CategoryPracticePage() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [editForm, setEditForm] = useState({
     text: "",
     category: "",
@@ -128,7 +132,36 @@ export default function CategoryPracticePage() {
       explanation: currentQuestion.explanation || "",
       imageUrl: currentQuestion.imageUrl || ""
     })
+    setUploadProgress(null)
     setIsEditOpen(true)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !storage) return
+
+    setIsSaving(true)
+    const storageRef = ref(storage, `question-diagrams/${Date.now()}_${file.name}`)
+    const uploadTask = uploadBytesResumable(storageRef, file)
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        setUploadProgress(progress)
+      }, 
+      (error) => {
+        toast({ variant: "destructive", title: "Upload Failed", description: error.message })
+        setUploadProgress(null)
+        setIsSaving(false)
+      }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+        setEditForm(prev => ({ ...prev, imageUrl: downloadURL }))
+        setUploadProgress(null)
+        setIsSaving(false)
+        toast({ title: "Visual Replaced", description: "Diagram updated in cloud." })
+      }
+    )
   }
 
   const handleSaveEdit = async () => {
@@ -385,20 +418,68 @@ export default function CategoryPracticePage() {
                 className="bg-background/50 border-white/10"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</Label>
-                <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</Label>
+                  <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Diagram URL (Manual)</Label>
+                  <Input 
+                    value={editForm.imageUrl}
+                    onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
+                    className="bg-background/50 border-white/10"
+                  />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Diagram URL</Label>
-                <Input 
-                  value={editForm.imageUrl}
-                  onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
-                  className="bg-background/50 border-white/10"
-                />
+                <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Diagram Upload</Label>
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="h-28 border-dashed border-white/20 flex flex-col gap-2 hover:bg-white/5 transition-all relative overflow-hidden"
+                    onClick={() => imageInputRef.current?.click()}
+                    type="button"
+                    disabled={uploadProgress !== null}
+                  >
+                    {editForm.imageUrl ? (
+                      <div className="absolute inset-0">
+                        <img src={editForm.imageUrl} alt="Preview" className="w-full h-full object-cover opacity-40" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-secondary">
+                          <CheckCircle2 size={24} />
+                          <span className="text-[10px] uppercase font-bold bg-background/80 px-2 py-0.5 rounded mt-1">Diagram Linked</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                        <UploadCloud size={24} />
+                        <span className="text-[10px] uppercase font-bold">Replace Diagram</span>
+                      </div>
+                    )}
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={imageInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload}
+                  />
+                  {uploadProgress !== null && (
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-[9px] uppercase font-bold text-secondary">
+                        <span>Uploading Visual...</span>
+                        <span>{Math.round(uploadProgress)}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="h-1 bg-white/5" />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+
             <div className="space-y-4">
               <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Options</Label>
               <div className="grid gap-3">
@@ -434,7 +515,7 @@ export default function CategoryPracticePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={handleSaveEdit} disabled={isSaving}>
+            <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={handleSaveEdit} disabled={isSaving || uploadProgress !== null}>
               {isSaving ? <Loader2 className="animate-spin mr-2" /> : "Sync Changes"}
             </Button>
           </DialogFooter>

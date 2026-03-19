@@ -1,10 +1,10 @@
-
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage } from "@/firebase"
 import { collection, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc } from "firebase/firestore"
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import { 
   Plus, 
   Trash2, 
@@ -21,7 +22,9 @@ import {
   AlertCircle,
   Database,
   MessageSquareQuote,
-  Pencil
+  Pencil,
+  UploadCloud,
+  ImageIcon
 } from "lucide-react"
 import {
   Dialog,
@@ -42,8 +45,10 @@ const SUPER_ADMIN_EMAIL = "ncubethubelihle483@gmail.com"
 export default function AdminQuestionsPage() {
   const { user, isUserLoading } = useUser()
   const db = useFirestore()
+  const storage = useStorage()
   const router = useRouter()
   const { toast } = useToast()
+  const imageInputRef = useRef<HTMLInputElement>(null)
   
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -51,6 +56,7 @@ export default function AdminQuestionsPage() {
   const [isSeeding, setIsSeeding] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
 
   // Question Form State
   const [questionForm, setQuestionForm] = useState({
@@ -92,6 +98,7 @@ export default function AdminQuestionsPage() {
   const handleOpenAddDialog = () => {
     setEditingId(null)
     setQuestionForm({ text: "", category: "Road Signs", options: ["", "", "", ""], correctAnswer: "", explanation: "", imageUrl: "" })
+    setUploadProgress(null)
     setIsDialogOpen(true)
   }
 
@@ -105,7 +112,33 @@ export default function AdminQuestionsPage() {
       explanation: q.explanation || "",
       imageUrl: q.imageUrl || ""
     })
+    setUploadProgress(null)
     setIsDialogOpen(true)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !storage) return
+
+    const storageRef = ref(storage, `question-diagrams/${Date.now()}_${file.name}`)
+    const uploadTask = uploadBytesResumable(storageRef, file)
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        setUploadProgress(progress)
+      }, 
+      (error) => {
+        toast({ variant: "destructive", title: "Upload Failed", description: error.message })
+        setUploadProgress(null)
+      }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+        setQuestionForm(prev => ({ ...prev, imageUrl: downloadURL }))
+        setUploadProgress(null)
+        toast({ title: "Diagram Ready", description: "Visual synced to cloud repository." })
+      }
+    )
   }
 
   const handleSaveQuestion = () => {
@@ -235,29 +268,77 @@ export default function AdminQuestionsPage() {
                     className="bg-background/50 border-white/10 h-12"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Category</Label>
-                    <select 
-                      value={questionForm.category}
-                      onChange={(e) => setQuestionForm({...questionForm, category: e.target.value})}
-                      className="w-full bg-background/50 border border-white/10 h-12 rounded-lg px-3 text-sm focus:ring-1 focus:ring-secondary outline-none"
-                    >
-                      <option value="Road Signs">Road Signs</option>
-                      <option value="Rules of the Road">Rules of the Road</option>
-                      <option value="Safety">Safety</option>
-                      <option value="Hazard Perception">Hazard Perception</option>
-                      <option value="Motorway">Motorway</option>
-                    </select>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Category</Label>
+                      <select 
+                        value={questionForm.category}
+                        onChange={(e) => setQuestionForm({...questionForm, category: e.target.value})}
+                        className="w-full bg-background/50 border border-white/10 h-12 rounded-lg px-3 text-sm focus:ring-1 focus:ring-secondary outline-none"
+                      >
+                        <option value="Road Signs">Road Signs</option>
+                        <option value="Rules of the Road">Rules of the Road</option>
+                        <option value="Safety">Safety</option>
+                        <option value="Hazard Perception">Hazard Perception</option>
+                        <option value="Motorway">Motorway</option>
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Diagram Link (Manual)</Label>
+                      <Input 
+                        placeholder="https://picsum.photos/..." 
+                        value={questionForm.imageUrl}
+                        onChange={(e) => setQuestionForm({...questionForm, imageUrl: e.target.value})}
+                        className="bg-background/50 border-white/10 h-12"
+                      />
+                    </div>
                   </div>
+
                   <div className="space-y-2">
-                    <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Diagram URL</Label>
-                    <Input 
-                      placeholder="https://picsum.photos/..." 
-                      value={questionForm.imageUrl}
-                      onChange={(e) => setQuestionForm({...questionForm, imageUrl: e.target.value})}
-                      className="bg-background/50 border-white/10 h-12"
-                    />
+                    <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Visual Evidence (Diagram Upload)</Label>
+                    <div className="flex flex-col gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="h-28 border-dashed border-white/20 flex flex-col gap-2 hover:bg-white/5 transition-all relative overflow-hidden"
+                        onClick={() => imageInputRef.current?.click()}
+                        type="button"
+                        disabled={uploadProgress !== null}
+                      >
+                        {questionForm.imageUrl ? (
+                          <div className="absolute inset-0">
+                            <img src={questionForm.imageUrl} alt="Preview" className="w-full h-full object-cover opacity-40" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-secondary">
+                              <CheckCircle2 size={24} />
+                              <span className="text-[10px] uppercase font-bold bg-background/80 px-2 py-0.5 rounded mt-1">Diagram Linked</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                            <UploadCloud size={24} />
+                            <span className="text-[10px] uppercase font-bold">Upload Scenario Diagram</span>
+                          </div>
+                        )}
+                      </Button>
+                      <input 
+                        type="file" 
+                        ref={imageInputRef} 
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleImageUpload}
+                      />
+                      {uploadProgress !== null && (
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-[9px] uppercase font-bold text-secondary">
+                            <span>Processing Visual...</span>
+                            <span>{Math.round(uploadProgress)}%</span>
+                          </div>
+                          <Progress value={uploadProgress} className="h-1 bg-white/5" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -303,7 +384,7 @@ export default function AdminQuestionsPage() {
                 </div>
               </div>
               <DialogFooter className="sticky bottom-0 bg-card pt-4 border-t border-white/5">
-                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={handleSaveQuestion} disabled={isSaving}>
+                <Button className="w-full bg-secondary text-white hover:bg-secondary/90 h-14 text-lg font-bold shadow-xl shadow-secondary/20 uppercase italic tracking-tighter" onClick={handleSaveQuestion} disabled={isSaving || uploadProgress !== null}>
                   {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : editingId ? "Save Changes" : "Authorize & Save Scenario"}
                 </Button>
               </DialogFooter>
@@ -322,7 +403,7 @@ export default function AdminQuestionsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/5 hover:bg-transparent">
-                  <TableHead className="text-[10px] uppercase font-bold text-muted-foreground w-12 text-center">Status</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold text-muted-foreground w-12 text-center">Visual</TableHead>
                   <TableHead className="text-[10px] uppercase font-bold text-muted-foreground">Scenario / Correct Path</TableHead>
                   <TableHead className="text-[10px] uppercase font-bold text-muted-foreground hidden md:table-cell">Category</TableHead>
                   <TableHead className="text-[10px] uppercase font-bold text-muted-foreground text-right">Control</TableHead>
@@ -339,7 +420,7 @@ export default function AdminQuestionsPage() {
                   questions.map((q) => (
                     <TableRow key={q.id} className="border-white/5 hover:bg-white/5 transition-colors">
                       <TableCell className="text-center">
-                        <CheckCircle2 size={18} className="text-secondary mx-auto" />
+                        {q.imageUrl ? <ImageIcon size={18} className="text-secondary mx-auto" /> : <div className="size-4 rounded-full border border-white/10 mx-auto" />}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">

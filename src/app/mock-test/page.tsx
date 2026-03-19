@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { MOCK_QUESTIONS } from "@/app/lib/data"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Timer, AlertCircle, CheckCircle2, Trophy, RotateCcw, ArrowRight, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, ShieldAlert } from "lucide-react"
+import { Timer, AlertCircle, CheckCircle2, Trophy, RotateCcw, ArrowRight, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, ShieldAlert, UploadCloud } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useCollection, useMemoFirebase, useStorage } from "@/firebase"
 import { doc, collection, setDoc, serverTimestamp, query, limit, getDoc, updateDoc, deleteDoc } from "firebase/firestore"
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 import Image from "next/image"
@@ -32,7 +33,10 @@ export default function MockTestPage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
+  const storage = useStorage()
   const { toast } = useToast()
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  
   const totalQuestions = 25
   const passThresholdPercent = 92
   const initialTime = 8 * 60
@@ -51,6 +55,7 @@ export default function MockTestPage() {
   // Admin Edit State
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [editForm, setEditForm] = useState({
     text: "",
     category: "",
@@ -218,7 +223,36 @@ export default function MockTestPage() {
       explanation: q.explanation || "",
       imageUrl: q.imageUrl || ""
     })
+    setUploadProgress(null)
     setIsEditOpen(true)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !storage) return
+
+    setIsSavingEdit(true)
+    const storageRef = ref(storage, `question-diagrams/${Date.now()}_${file.name}`)
+    const uploadTask = uploadBytesResumable(storageRef, file)
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        setUploadProgress(progress)
+      }, 
+      (error) => {
+        toast({ variant: "destructive", title: "Upload Failed", description: error.message })
+        setUploadProgress(null)
+        setIsSavingEdit(false)
+      }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+        setEditForm(prev => ({ ...prev, imageUrl: downloadURL }))
+        setUploadProgress(null)
+        setIsSavingEdit(false)
+        toast({ title: "Visual Replaced", description: "Diagram updated in cloud." })
+      }
+    )
   }
 
   const handleSaveEdit = async () => {
@@ -531,20 +565,68 @@ export default function MockTestPage() {
                 className="bg-background/50 border-white/10"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</Label>
-                <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</Label>
+                  <Input value={editForm.category} readOnly className="bg-muted/10 opacity-60" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Diagram URL (Manual)</Label>
+                  <Input 
+                    value={editForm.imageUrl}
+                    onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
+                    className="bg-background/50 border-white/10"
+                  />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Diagram URL</Label>
-                <Input 
-                  value={editForm.imageUrl}
-                  onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
-                  className="bg-background/50 border-white/10"
-                />
+                <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground ml-1">Diagram Upload</Label>
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="h-28 border-dashed border-white/20 flex flex-col gap-2 hover:bg-white/5 transition-all relative overflow-hidden"
+                    onClick={() => imageInputRef.current?.click()}
+                    type="button"
+                    disabled={uploadProgress !== null}
+                  >
+                    {editForm.imageUrl ? (
+                      <div className="absolute inset-0">
+                        <img src={editForm.imageUrl} alt="Preview" className="w-full h-full object-cover opacity-40" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-secondary">
+                          <CheckCircle2 size={24} />
+                          <span className="text-[10px] uppercase font-bold bg-background/80 px-2 py-0.5 rounded mt-1">Diagram Linked</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                        <UploadCloud size={24} />
+                        <span className="text-[10px] uppercase font-bold">Replace Diagram</span>
+                      </div>
+                    )}
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={imageInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload}
+                  />
+                  {uploadProgress !== null && (
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-[9px] uppercase font-bold text-secondary">
+                        <span>Uploading Diagram...</span>
+                        <span>{Math.round(uploadProgress)}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="h-1 bg-white/5" />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+
             <div className="space-y-4">
               <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Options</Label>
               <div className="grid gap-3">
@@ -580,7 +662,7 @@ export default function MockTestPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={handleSaveEdit} disabled={isSavingEdit}>
+            <Button className="w-full bg-secondary text-white font-bold h-12 uppercase tracking-widest text-xs" onClick={handleSaveEdit} disabled={isSavingEdit || uploadProgress !== null}>
               {isSavingEdit ? <Loader2 className="animate-spin mr-2" /> : "Sync Changes"}
             </Button>
           </DialogFooter>
