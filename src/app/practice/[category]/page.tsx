@@ -311,7 +311,7 @@ export default function CategoryPracticePage() {
             <Button variant="ghost" size="icon" className="bg-primary/20 hover:bg-primary/40 text-secondary border border-secondary/20" onClick={handleOpenEdit}>
               <Pencil size={16} />
             </Button>
-            <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20" onClick={handleDeleteQuestion} disabled={isDeleting}>
+            <Button variant="ghost" size="icon" className="bg-destructive/10 hover:bg-destructive/20 text-destructive border border-secondary/20" onClick={handleDeleteQuestion} disabled={isDeleting}>
               {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
             </Button>
             <Badge variant="outline" className="bg-destructive/5 text-destructive border-destructive/20 text-[8px] uppercase tracking-widest h-6">
